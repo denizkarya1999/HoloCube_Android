@@ -214,9 +214,20 @@ by the end-to-end device test. One box, **Transmitter 76%**, at the reference po
 
 ![One Transmitter box drawn by the app on the Pixel 8a](Docs/Screenshots/annotated-angled-frame.png)
 
-UI screenshots of the combined app (main screen with the Transmitter button, Settings,
-About, Guide, and the Transmitter pattern) are recaptured after each UI change; see
-[VALIDATION.md](VALIDATION.md) for what each capture showed.
+| Ready | Live inference status | Recording |
+| --- | --- | --- |
+| ![Ready](Docs/Screenshots/ready-pixel8a.png) | ![Inference status](Docs/Screenshots/inference-status-pixel8a.png) | ![Recording](Docs/Screenshots/recording-pixel8a.png) |
+
+| Settings | About | Guide |
+| --- | --- | --- |
+| ![Settings](Docs/Screenshots/settings-pixel8a.png) | ![About](Docs/Screenshots/about-pixel8a.png) | ![Guide](Docs/Screenshots/guide-pixel8a.png) |
+
+**Transmitter screen** (landscape, About Us revealed by a tap):
+
+![Transmitter pattern on the Pixel 8a](Docs/Screenshots/transmitter-pixel8a.png)
+
+The live-inference screenshot shows the status line (**0 transmitters · 149 ms**)
+while the camera looked at the ceiling; no box is drawn without a transmitter in view.
 
 ## Label
 

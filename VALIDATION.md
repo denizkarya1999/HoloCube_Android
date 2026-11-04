@@ -41,16 +41,21 @@ SHA-256 `c65a872004784b0f03b099520c81a40414bb33d39e7124f4f65c3fcc03dffcd6`.
   the image only; the About Us button auto-hides after four seconds and reopens on tap.
   Espresso's touch injection does not work on Android 17 (it needs a removed hidden
   `InputManager` method), so these tests drive views with `performClick`.
-- Screenshots: the Transmitter screen rendered the pattern full screen in landscape
-  with no controls; the About page showed only the project details with
-  **Platform: Android Smartphone + Meta Quest 3S**; the Settings page showed the
-  confidence slider and CPU threads only; the main screen showed Transmitter,
-  Start Inference, and Record.
+- Final APK, phone unlocked: `cameraSurvivesSwitchingAndPausing` and the three
+  `TransmitterScreenTest` tests passed (**OK (4 tests)**), so all ten instrumented
+  tests pass on the shipped build. A launch then ran live inference (first frame
+  **89 ms**, status line **0 transmitters · 149 ms** facing the ceiling) and a
+  three-second recording saved `Movies/HoloCube/HoloCube_20261104_154517_045.mp4`
+  with `HOLOCUBE_VIDEO_STARTED`, `HOLOCUBE_VIDEO_SAVING`, and `HOLOCUBE_VIDEO_SAVED`.
+- Screenshots (in `Docs/Screenshots`): the three round buttons show **Transmitter**,
+  **Start Inference** / **Stop Inference**, and **Record** / **Stop** on one line each;
+  the recording badge and paused status; the Settings page with the confidence slider
+  and CPU threads only; the About page with only the project details and
+  **Platform: Android Smartphone + Meta Quest 3S**; the Guide dialog; and the
+  Transmitter screen full screen in landscape with About Us revealed by a tap.
 
 ### Remaining checks
 
-- Visual confirmation that the auto-sized button labels fit on one line (the phone
-  locked before that capture), and the two UI test classes on the final APK.
 - A live camera detection of the physical transmitter on the phone.
 - Sustained frame rate, memory, and thermal behaviour over long sessions.
 - Front-camera recordings on devices whose sensor orientation differs from 270°.
