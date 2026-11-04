@@ -1,0 +1,18 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Splash screen theme -->
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/darkBlue</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/holocube</item>
+        <item name="windowSplashScreenAnimationDuration">200</item>
+        <item name="postSplashScreenTheme">@style/Theme.HoloCube</item>
+    </style>
+
+    <!-- Base application theme. -->
+    <style name="Base.Theme.HoloCube" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Michigan Blue and Michigan Maize, matching the Quest dialogs. -->
+        <item name="colorPrimary">@color/darkBlue</item>
+        <item name="android:statusBarColor">@color/darkBlue</item>
+    </style>
+
+    <style name="Theme.HoloCube" parent="Base.Theme.HoloCube" />
+</resources>

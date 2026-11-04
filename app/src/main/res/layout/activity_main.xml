@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/preview_frame"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <!-- Camera Preview using TextureView -->
+    <TextureView
+        android:id="@+id/viewFinder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- ImageView for displaying detection boxes (transparent overlay) or a frozen snapshot -->
+    <ImageView
+        android:id="@+id/processedFrameView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        android:scaleType="centerCrop"
+        android:importantForAccessibility="no" />
+
+    <!-- Title Bar -->
+    <LinearLayout
+        android:id="@+id/title_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:background="@color/darkBlue"
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp"
+        android:elevation="4dp">
+
+        <ImageButton
+            android:id="@+id/iconImageButton"
+            android:layout_width="58dp"
+            android:layout_height="58dp"
+            android:background="@android:color/transparent"
+            android:src="@drawable/holocube"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"
+            android:contentDescription="@string/logo_description" />
+
+        <TextView
+            android:id="@+id/titleText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/holocube"
+            android:textSize="44sp"
+            android:textColor="@color/yellow"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:paddingStart="8dp"
+            android:paddingEnd="0dp" />
+    </LinearLayout>
+
+    <!-- Top Controls Container -->
+    <LinearLayout
+        android:id="@+id/top_controls_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="90dp">
+
+        <Button
+            android:id="@+id/guideButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/guide"
+            android:textSize="16sp"
+            android:layout_margin="8dp"
+            android:backgroundTint="@color/blue"
+            android:textColor="@color/white"
+            android:elevation="2dp" />
+
+        <Button
+            android:id="@+id/settingsButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/settings"
+            android:textSize="16sp"
+            android:layout_margin="8dp"
+            android:backgroundTint="@color/yellow"
+            android:textColor="@color/darkBlue"
+            android:elevation="2dp" />
+
+        <Button
+            android:id="@+id/aboutButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/about"
+            android:textSize="16sp"
+            android:layout_margin="8dp"
+            android:layout_marginEnd="16dp"
+            android:backgroundTint="@color/yellow"
+            android:textColor="@color/darkBlue"
+            android:elevation="2dp" />
+    </LinearLayout>
+
+    <!-- Status line: model loading, detections, timing, and recording feedback -->
+    <TextView
+        android:id="@+id/statusText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="156dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:background="@drawable/status_background"
+        android:textColor="@color/yellow"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:text="@string/status_loading" />
+
+    <!-- Recording indicator: red circle and "Recording", as in the headset -->
+    <LinearLayout
+        android:id="@+id/recordingIndicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="212dp"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp"
+        android:background="@drawable/status_background"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <View
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:background="@drawable/recording_dot" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="@string/recording"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Zoom Buttons Container -->
+    <LinearLayout
+        android:id="@+id/zoom_button_container"
+        android:layout_width="75dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|center_vertical"
+        android:layout_marginEnd="16dp"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/zoomInButton"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginBottom="16dp"
+            android:backgroundTint="@color/yellow"
+            android:elevation="2dp"
+            android:text="@string/zoom_in"
+            android:textColor="@color/darkBlue"
+            android:textSize="24sp"
+            android:contentDescription="@string/zoom_in_description" />
+
+        <Button
+            android:id="@+id/zoomOutButton"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginBottom="16dp"
+            android:backgroundTint="@color/yellow"
+            android:elevation="2dp"
+            android:text="@string/zoom_out"
+            android:textColor="@color/darkBlue"
+            android:textSize="24sp"
+            android:contentDescription="@string/zoom_out_description" />
+
+        <!-- Switch Camera -->
+        <Button
+            android:id="@+id/switchCameraButton"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginBottom="16dp"
+            android:backgroundTint="@color/yellow"
+            android:elevation="2dp"
+            android:text="@string/switch_camera"
+            android:textColor="@color/darkBlue"
+            android:textSize="22sp"
+            android:contentDescription="@string/switch_camera_description" />
+
+        <Button
+            android:id="@+id/clearButton"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginBottom="16dp"
+            android:backgroundTint="@color/red"
+            android:elevation="2dp"
+            android:text="@string/clear"
+            android:textColor="@color/white"
+            android:textSize="24sp"
+            android:contentDescription="@string/clear_description" />
+    </LinearLayout>
+
+    <!-- Bottom Controls -->
+    <LinearLayout
+        android:id="@+id/button_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_marginBottom="50dp">
+
+        <Button
+            android:id="@+id/TakeSnapshotButton"
+            android:layout_width="110dp"
+            android:layout_height="110dp"
+            android:backgroundTint="@color/green"
+            android:elevation="2dp"
+            android:text="@string/take_snapshot"
+            android:textColor="@android:color/white"
+            android:layout_marginEnd="16dp" />
+
+        <Button
+            android:id="@+id/startInferenceButton"
+            android:layout_width="110dp"
+            android:layout_height="110dp"
+            android:backgroundTint="@color/blue"
+            android:elevation="2dp"
+            android:text="@string/start_inference"
+            android:textColor="@android:color/white"
+            android:layout_marginEnd="16dp" />
+
+        <Button
+            android:id="@+id/recordButton"
+            android:layout_width="110dp"
+            android:layout_height="110dp"
+            android:layout_marginEnd="8dp"
+            android:backgroundTint="@color/yellow"
+            android:elevation="2dp"
+            android:text="@string/start_recording"
+            android:textColor="@android:color/black"
+            android:textSize="16sp" />
+
+    </LinearLayout>
+
+</FrameLayout>

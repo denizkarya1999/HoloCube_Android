@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Declares that the app uses any type of camera (either front or back) -->
+    <uses-feature android:name="android.hardware.camera.any" />
+
+    <!-- Live camera frames for YOLO26 inference and data-collection videos -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Spoken notes are saved with the camera image in the same MP4 -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Android 8 and 9 need this to write MP4s into the shared Movies folder -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.HoloCube"
+        tools:targetApi="31">
+
+        <activity
+            android:name=".MainActivity"
+            android:theme="@style/Theme.App.Starting"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".AboutHoloCubeActivity" />
+        <activity android:name=".SettingsActivity" />
+    </application>
+</manifest>

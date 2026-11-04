@@ -1,0 +1,14 @@
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+# Isolated Python 3.8 build tools created by Tools/setup-python.sh
+/.build-tools
+# Local APK copies and device logs
+/Builds

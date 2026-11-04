@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- Same two settings as the Quest Settings page, plus the model's CPU thread count -->
+    <PreferenceCategory
+        android:title="Settings"
+        android:layout="@layout/preference_category_layout">
+
+        <SeekBarPreference
+            android:key="confidence_threshold"
+            android:layout="@layout/preference_seekbar_layout"
+            android:title="Confidence Thresholds"
+            android:summary="Minimum confidence in percent. Raise it to show fewer uncertain detections."
+            android:defaultValue="35"
+            android:max="100"
+            app:min="5"
+            app:seekBarIncrement="5"
+            app:showSeekBarValue="true" />
+
+        <SeekBarPreference
+            android:key="max_detections"
+            android:layout="@layout/preference_seekbar_layout"
+            android:title="Number of boxes"
+            android:summary="Maximum number of detections drawn per frame."
+            android:defaultValue="24"
+            android:max="80"
+            app:min="1"
+            app:showSeekBarValue="true" />
+
+        <ListPreference
+            android:key="cpu_threads"
+            android:layout="@layout/preference_list_layout"
+            android:title="PyTorch CPU threads"
+            android:summary="%s used by the embedded PyTorch runtime"
+            android:entries="@array/cpu_thread_options"
+            android:entryValues="@array/cpu_thread_values"
+            android:defaultValue="4" />
+    </PreferenceCategory>
+
+</PreferenceScreen>
