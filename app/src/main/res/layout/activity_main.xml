@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/preview_frame"
     android:layout_width="match_parent"
@@ -12,7 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- ImageView for displaying detection boxes (transparent overlay) or a frozen snapshot -->
+    <!-- ImageView for displaying the detection box as a transparent overlay -->
     <ImageView
         android:id="@+id/processedFrameView"
         android:layout_width="match_parent"
@@ -223,17 +224,33 @@
         android:layout_marginBottom="50dp">
 
         <Button
-            android:id="@+id/TakeSnapshotButton"
+            android:id="@+id/transmitterButton"
+            android:maxLines="1"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            app:autoSizeTextType="uniform"
+            app:autoSizeMinTextSize="10sp"
+            app:autoSizeMaxTextSize="16sp"
+            app:autoSizeStepGranularity="1sp"
             android:layout_width="110dp"
             android:layout_height="110dp"
-            android:backgroundTint="@color/green"
+            android:backgroundTint="@color/darkBlue"
+            app:strokeColor="@color/yellow"
+            app:strokeWidth="2dp"
             android:elevation="2dp"
-            android:text="@string/take_snapshot"
-            android:textColor="@android:color/white"
+            android:text="@string/transmitter"
+            android:textColor="@color/yellow"
             android:layout_marginEnd="16dp" />
 
         <Button
             android:id="@+id/startInferenceButton"
+            android:maxLines="1"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            app:autoSizeTextType="uniform"
+            app:autoSizeMinTextSize="10sp"
+            app:autoSizeMaxTextSize="16sp"
+            app:autoSizeStepGranularity="1sp"
             android:layout_width="110dp"
             android:layout_height="110dp"
             android:backgroundTint="@color/blue"
@@ -244,14 +261,20 @@
 
         <Button
             android:id="@+id/recordButton"
+            android:maxLines="1"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            app:autoSizeTextType="uniform"
+            app:autoSizeMinTextSize="10sp"
+            app:autoSizeMaxTextSize="16sp"
+            app:autoSizeStepGranularity="1sp"
             android:layout_width="110dp"
             android:layout_height="110dp"
             android:layout_marginEnd="8dp"
             android:backgroundTint="@color/yellow"
             android:elevation="2dp"
             android:text="@string/start_recording"
-            android:textColor="@android:color/black"
-            android:textSize="16sp" />
+            android:textColor="@android:color/black" />
 
     </LinearLayout>
 

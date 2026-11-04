@@ -36,5 +36,12 @@
         </activity>
         <activity android:name=".AboutHoloCubeActivity" />
         <activity android:name=".SettingsActivity" />
+        <!-- The optical pattern prefers landscape on phones; the image still fits larger windows. -->
+        <activity
+            android:name=".transmitter.TransmitterActivity"
+            android:exported="false"
+            android:theme="@style/Theme.HoloCube.Transmitter"
+            android:screenOrientation="sensorLandscape"
+            tools:ignore="DiscouragedApi,LockedOrientationActivity" />
     </application>
 </manifest>

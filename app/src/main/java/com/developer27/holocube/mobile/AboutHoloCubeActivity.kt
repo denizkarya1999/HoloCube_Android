@@ -17,16 +17,12 @@ class AboutHoloCubeActivity : AppCompatActivity() {
         binding = ActivityAboutHolocubeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // The title and website rows open the developer's website.
+        // Tapping the HoloCube title opens the developer's website.
         binding.titleContainer.setOnClickListener { openUrl(getString(R.string.url_website)) }
-        binding.textViewWebsite.setOnClickListener { openUrl(getString(R.string.url_website)) }
 
         // The advisor and lab rows open the Trustworthy AIoT Lab site.
         binding.textViewProfessor.setOnClickListener { openUrl(getString(R.string.url_lab)) }
         binding.textViewLab.setOnClickListener { openUrl(getString(R.string.url_lab)) }
-
-        // The paper row opens the HoloCube ICNP 2024 paper.
-        binding.textViewPaper.setOnClickListener { openUrl(getString(R.string.url_paper)) }
 
         // The UM logo opens the university site.
         binding.umLogo.setOnClickListener { openUrl(getString(R.string.url_university)) }

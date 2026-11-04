@@ -48,7 +48,7 @@ object BitmapToRgbaTensor {
         return bytes
     }
 
-    /** Convenience for tests and snapshots: a whole bitmap → letterboxed RGBA bytes. */
+    /** Convenience for tests and tools: a whole bitmap → letterboxed RGBA bytes. */
     fun fromBitmap(bitmap: Bitmap, modelSize: Int = TransmitterHelper.INPUT_SIZE): ByteArray {
         val source = if (bitmap.config == Bitmap.Config.ARGB_8888) bitmap else bitmap.copy(Bitmap.Config.ARGB_8888, false)
         val frame = Mat()

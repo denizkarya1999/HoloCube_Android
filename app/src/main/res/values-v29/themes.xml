@@ -1,0 +1,12 @@
+<resources>
+    <!-- Transmitter screen on Android 10+: no bar scrims over the black canvas. -->
+    <style name="Theme.HoloCube.Transmitter" parent="Theme.HoloCube">
+        <item name="android:windowBackground">@color/black</item>
+        <item name="android:statusBarColor">@color/black</item>
+        <item name="android:navigationBarColor">@color/black</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="android:forceDarkAllowed">false</item>
+    </style>
+</resources>

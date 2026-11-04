@@ -212,7 +212,7 @@ class HoloCubeRegressionTest {
             scenario.onActivity { activity ->
                 assertFalse(activity.isFinishing)
                 assertEquals("Start Inference", activity.findViewById<Button>(R.id.startInferenceButton).text.toString())
-                assertTrue(activity.findViewById<Button>(R.id.TakeSnapshotButton).isEnabled)
+                assertTrue(activity.findViewById<Button>(R.id.recordButton).isEnabled)
             }
         }
     }

@@ -2,7 +2,7 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <!-- The Quest Settings page: adjustable confidence, fixed box count, plus the model's CPU thread count -->
+    <!-- Adjustable confidence plus the model's CPU thread count -->
     <PreferenceCategory
         android:title="Settings"
         android:layout="@layout/preference_category_layout">
@@ -17,15 +17,6 @@
             app:min="5"
             app:seekBarIncrement="5"
             app:showSeekBarValue="true" />
-
-        <!-- The transmitter pipeline always keeps only the strongest valid detection. -->
-        <Preference
-            android:key="max_detections_fixed"
-            android:layout="@layout/preference_list_layout"
-            android:title="Number of boxes (fixed)"
-            android:summary="1: the highest-confidence Transmitter above the threshold"
-            android:selectable="false"
-            android:persistent="false" />
 
         <ListPreference
             android:key="cpu_threads"

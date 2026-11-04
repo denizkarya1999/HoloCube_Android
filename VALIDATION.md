@@ -5,6 +5,58 @@ Verified on November 4, 2026, on the development workstation and a connected
 Results come from the actual build logs, unit-test reports, device logcat, and
 instrumented test runs of that session.
 
+## Combined app with the Transmitter — November 4, 2026
+
+Changes since the transmitter-recognition edition: About keeps only the project
+details (the **HoloCube** title opens the website); the Snapshot button and the
+"Number of boxes" settings row are gone; the standalone HoloCube Transmitter app is
+merged in as the **Transmitter** button; the three round buttons auto-size their
+labels to one line.
+
+### Passed on the development computer
+
+- `./gradlew :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest
+  :app:lintDebug`: build successful; 12 unit tests passed; lint 0 errors, 10 warnings
+  (6 `ButtonStyle`, 4 `Overdraw`, cosmetic).
+- Transmitter pattern `drawable-nodpi/transmitter_frame.png` SHA-256
+  `7b25031ad241596fe8f22cfa3d14c8229c419091e95fff5116146b389f6d6c6e`, identical to the
+  file the standalone app shipped.
+
+Debug APK: `app/build/outputs/apk/debug/app-debug.apk`, 103,082,140 bytes,
+SHA-256 `c65a872004784b0f03b099520c81a40414bb33d39e7124f4f65c3fcc03dffcd6`.
+
+### Passed on the connected Pixel 8a
+
+- Final APK installed; cold launch passed the startup reference
+  (`HOLOCUBE_PT_DEVICE_PARITY_PASSED`, `HOLOCUBE_PT_READY`).
+- Six non-UI instrumented tests on the final APK: **OK (6 tests)**, first inference
+  163 ms, `HOLOCUBE_TRANSMITTER_SINGLE_BOX` logged by the end-to-end test.
+- On the build immediately before the label auto-sizing (same code otherwise):
+  all seven `HoloCubeRegressionTest`/`ExampleInstrumentedTest` tests passed, including
+  `cameraSurvivesSwitchingAndPausing` (three camera switches and clears, pause and
+  resume cycles, inference start then pause and resume), and the three ported
+  `TransmitterScreenTest` tests passed: whole 1920 × 1200 image fitted in landscape
+  with the keep-screen-on flag and `BRIGHTNESS_OVERRIDE_FULL` set, system bars hidden,
+  state kept across recreation; About Us opens the app's About page and Back restores
+  the image only; the About Us button auto-hides after four seconds and reopens on tap.
+  Espresso's touch injection does not work on Android 17 (it needs a removed hidden
+  `InputManager` method), so these tests drive views with `performClick`.
+- Screenshots: the Transmitter screen rendered the pattern full screen in landscape
+  with no controls; the About page showed only the project details with
+  **Platform: Android Smartphone + Meta Quest 3S**; the Settings page showed the
+  confidence slider and CPU threads only; the main screen showed Transmitter,
+  Start Inference, and Record.
+
+### Remaining checks
+
+- Visual confirmation that the auto-sized button labels fit on one line (the phone
+  locked before that capture), and the two UI test classes on the final APK.
+- A live camera detection of the physical transmitter on the phone.
+- Sustained frame rate, memory, and thermal behaviour over long sessions.
+- Front-camera recordings on devices whose sensor orientation differs from 270°.
+- Android 8–9 legacy storage path for recordings (only Android 17 was available).
+- Other phones and emulators (x86_64 builds need `-PholocubeAbi=x86_64`).
+
 ## Transmitter Recognition edition — November 4, 2026
 
 ### Model and app

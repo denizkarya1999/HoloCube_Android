@@ -15,4 +15,27 @@
     </style>
 
     <style name="Theme.HoloCube" parent="Base.Theme.HoloCube" />
+
+    <!-- Transmitter screen: black canvas behind the optical pattern. -->
+    <style name="Theme.HoloCube.Transmitter" parent="Theme.HoloCube">
+        <item name="android:windowBackground">@color/black</item>
+        <item name="android:statusBarColor">@color/black</item>
+        <item name="android:navigationBarColor">@color/black</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <!-- About Us button over the pattern: Michigan Blue with a maize outline. -->
+    <style name="HoloCubeTransmitterButton" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/darkBlue</item>
+        <item name="strokeColor">@color/yellow</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="cornerRadius">14dp</item>
+        <item name="android:textColor">@color/yellow</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:paddingStart">20dp</item>
+        <item name="android:paddingEnd">20dp</item>
+    </style>
 </resources>

@@ -59,16 +59,28 @@ emulator build (the ARM wheel is not used then; do not ship that APK).
 4. `TransmitterHelper.parseRows` reads the `[1,300,6]` rows `[x1,y1,x2,y2,confidence,class_id]`,
    removes weak, wrong-class, or invalid rows, maps the boxes through `ImageLetterbox`
    back to frame pixels, sorts by confidence, and keeps only the strongest one
-   (`TransmitterHelper.MAX_DETECTIONS = 1`, fixed; Settings cannot raise it). No second
-   NMS pass. The first selected box logs `HOLOCUBE_TRANSMITTER_SINGLE_BOX`.
+   (`TransmitterHelper.MAX_DETECTIONS = 1`, the transmitter pipeline's rule; there is no
+   user setting for it). No second NMS pass. The first selected box logs
+   `HOLOCUBE_TRANSMITTER_SINGLE_BOX`. The parser itself takes the class count and box
+   limit as parameters so that further models can reuse it.
 5. `VideoProcessor` draws a maize box with a blue label chip (`Transmitter  98%`) on a
    transparent overlay the size of the frame and hands it to `processedFrameView`, which
-   sits over the live preview. **Snapshot** draws onto the frame itself and freezes it.
+   sits over the live preview. The device tests draw onto the frame itself instead.
 
 Input is `[1,3,320,320]` float32; output is `[1,300,6]`. The startup check in
 `holocube_runtime.initialize` verifies that the reference belongs to this checkpoint,
 runs the bundled bright transmitter frame, and must reproduce the recorded box within
 0.001 confidence and 1 original-image pixel before camera frames are accepted.
+
+## Transmitter screen
+
+`transmitter/TransmitterActivity` is the former standalone HoloCube Transmitter app.
+`FullscreenActivity` keeps the screen on with a window flag (no wake lock), requests
+`BRIGHTNESS_OVERRIDE_FULL` for that window only, draws into display cutouts with
+symmetric safe padding, and hides the system bars (swipe to reveal them). The pattern
+`drawable-nodpi/transmitter_frame.png` (1920 × 1200) is fitted without cropping or
+stretching; About Us opens the app's About page. The screen is landscape
+(`sensorLandscape`); the camera activity pauses and closes the camera while it is shown.
 
 ## Differences from the headset
 
@@ -79,7 +91,7 @@ runs the bundled bright transmitter frame, and must reproduce the recorded box w
 | Controller buttons | On-screen buttons, joystick settings become sliders |
 | Hold B to record | Tap Record, tap Stop |
 | 2 PyTorch threads | 4 by default, adjustable in Settings |
-| Joystick adjusts confidence; box count fixed at 1 | Slider adjusts confidence; box count fixed at 1 |
+| Joystick adjusts confidence; Settings shows the fixed box count | Slider adjusts confidence; no box-count row |
 
 ## Checkpoints
 

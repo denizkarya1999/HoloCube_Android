@@ -17,6 +17,12 @@ PyTorch, and the supplied **`holocube_transmitter.pt`** checkpoint unchanged; th
 same runtime, startup reference check, and decoder rules as the headset. The model
 has one class, `0: Transmitter`, and uses the YOLO26n architecture.
 
+The app also contains the **HoloCube Transmitter**: the **Transmitter** button shows
+the supplied 1920 × 1200 optical pattern full screen in landscape at maximum
+brightness and keeps the display awake, exactly as the former standalone Transmitter
+phone app did. One phone can therefore act as the transmitter while a headset or a
+second phone recognizes it.
+
 The app is built with the same technologies, UI, and code structure as
 [**LiFind**](https://github.com/denizkarya1999/LiFind): Kotlin, Camera2 with a
 `TextureView` preview, an OpenCV frame processor, a `PreferenceFragmentCompat`
@@ -39,15 +45,19 @@ Every headset function has a phone counterpart. Controller buttons become on-scr
 | **A**: toggle transmitter recognition | **Start Inference / Stop Inference** button; "Inference Mode: Off" shows for three seconds |
 | Hold **B**: record training video (MP4 with microphone in `Movies/HoloCube`) | **Record / Stop** button, red "Recording" badge, saved filename shown for six seconds |
 | **X**: About HoloCube | **About** page with the same project details and tappable links |
-| **Y**: Settings (confidence threshold; number of boxes fixed at 1) | **Settings** page with a confidence slider, the fixed box count, and PyTorch CPU threads |
+| **Y**: Settings (confidence threshold) | **Settings** page with a confidence slider and PyTorch CPU threads |
 | **Menu**: Controller Guide | **Guide** dialog |
 | Startup reference check of the trained checkpoint | Same check; the status line reports model loading and errors |
-| — | **Snapshot** (recognize one frame and freeze it), zoom, front/back switch, **C** to clear, as in LiFind |
+| — | Zoom, front/back switch, and **C** to clear, as in LiFind |
+| HoloCube Transmitter (separate phone app) | **Transmitter** button: the optical pattern full screen, landscape, maximum brightness, screen kept awake; tap it for About Us |
 
 The recognition target is the transmitter assembly (black cube frame, central
 pyramid, and phone/base) as annotated in the supplied dataset. The app does not
 decode optical data or identify individual transmitters; the paper's optical data
 transmission and control channel remain future work, as in the headset app.
+Further models are planned for this app: `TransmitterHelper` owns the current one,
+and its parser already accepts any class count and box limit, so another model is
+added as a sibling helper with its own checkpoint, class list, and reference fixture.
 
 ## Research inspiration
 
@@ -88,10 +98,13 @@ HoloCube_Android/
 │   ├── java/com/developer27/holocube/mobile/
 │   │   ├── MainActivity.kt                 Camera → recognition → display, all controls
 │   │   ├── AboutHoloCubeActivity.kt        Project details and links
-│   │   ├── SettingsActivity.kt             Confidence, fixed box count, CPU threads
+│   │   ├── SettingsActivity.kt             Confidence threshold, CPU threads
 │   │   ├── camera/
 │   │   │   ├── CameraHelper.kt             Camera2 open/close, preview, zoom, switch, record session
 │   │   │   └── VideoRecorder.kt            Training video (MP4 + microphone) to Movies/HoloCube
+│   │   ├── transmitter/
+│   │   │   ├── TransmitterActivity.kt      The optical pattern screen (former HoloCube Transmitter app)
+│   │   │   └── FullscreenActivity.kt       Keep awake, full brightness, cutouts, hidden system bars
 │   │   └── videoprocessing/
 │   │       ├── VideoProcessor.kt           Frame → letterbox → PyTorch → OpenCV drawing
 │   │       ├── TransmitterHelper.kt        Runtime, class name, single-box parser (no second NMS)
@@ -107,9 +120,9 @@ HoloCube_Android/
 │   ├── assets/
 │   │   ├── transmitter.names.txt           Single class: Transmitter
 │   │   └── provenance.json                 Source, dataset, runtime versions, checksum
-│   └── res/                                LiFind-style layouts, preferences, theme
+│   └── res/                                LiFind-style layouts, preferences, theme, transmitter_frame.png
 ├── app/src/test/                           JUnit: letterbox geometry, single-box parsing
-├── app/src/androidTest/                    Device: checkpoint load, angled/low-light parity, camera lifecycle
+├── app/src/androidTest/                    Device: checkpoint load, angled/low-light parity, camera lifecycle, transmitter screen
 ├── Tools/setup-python.sh                   Isolated Python 3.8 for Chaquopy's pip step
 ├── Docs/DEVELOPMENT.md                     Versions, runtime flow, headset differences
 ├── Docs/Screenshots/                       Pixel 8a screenshots
@@ -128,15 +141,15 @@ HoloCube_Android/
 | Model runtime | TFLite (LiteRT) interpreters | Embedded Python/PyTorch loading the supplied `.pt` (Chaquopy), as on the Quest |
 | Output parsing | `YOLOLEDHelper.parseTFLite` | `TransmitterHelper.parseRows` (end-to-end head, strongest valid box only) |
 | Settings | `PreferenceFragmentCompat`, yellow preference rows | Same, with a `SeekBarPreference` confidence slider |
-| About | ConstraintLayout card, U-M logo, lab link | Same, with HoloCube's fields, paper, and website |
+| About | ConstraintLayout card, U-M logo, lab link | Same, with HoloCube's fields; the HoloCube title opens the website |
 | Theme | Material 3, splash screen, Michigan colours | Same |
 | Tests | JUnit parser tests, device regression test | Same pattern, plus on-device parity with the Ultralytics reference boxes |
 
 ## Build, install, and use
 
-Android app ID: `com.developer27.holocube.mobile`. It installs alongside the
-[HoloCube Transmitter](https://github.com/denizkarya1999/HoloCube/tree/main/Transmitter)
-phone app, which displays the optical pattern this app recognizes.
+Android app ID: `com.developer27.holocube.mobile`. The former standalone HoloCube
+Transmitter app is part of this app (the **Transmitter** button), so one install covers
+both roles.
 
 1. Clone this repository and run `bash Tools/setup-python.sh` (creates an isolated
    Python 3.8 for Chaquopy's pip step). Open the folder in **Android Studio** with
@@ -164,10 +177,14 @@ phone app, which displays the optical pattern this app recognizes.
 5. Press **Record** to record a training video. Allow microphone access the first time.
    A red *Recording* badge appears; press **Stop** to save. MP4s are saved in
    `Movies/HoloCube` and the filename is shown for six seconds.
-6. **Snapshot** recognizes one frame and freezes it; **C** clears and restarts the
-   camera. **Settings** adjusts **Confidence Thresholds** (5–100 %) with a slider and
-   the PyTorch CPU thread count; **Number of boxes (fixed)** is always 1. **About**
-   shows the project details. **Guide** lists the controls.
+6. **Transmitter** shows the optical pattern full screen in landscape. The screen stays
+   awake at maximum brightness while it is visible; tap the pattern to reveal **About
+   Us**, and swipe from a screen edge, then press Back, to return to the camera. The
+   pattern is static; it does not encode or send changing data.
+7. **C** clears results and restarts the camera. **Settings** adjusts
+   **Confidence Thresholds** (5–100 %) with a slider and the PyTorch CPU thread count.
+   **About** shows the project details; tapping the **HoloCube** title there (or on the
+   main screen) opens the developer's website. **Guide** lists the controls.
 
 The weights and class name are included in the app; no server or model download is
 needed. The debug APK is about 100 MB because it carries the Python and PyTorch runtime.
@@ -182,8 +199,10 @@ adb -s PHONE_SERIAL logcat -s HoloCube                # HOLOCUBE_PT_*, HOLOCUBE_
 
 The device tests load the trained checkpoint, confirm the startup reference check,
 compare the angled and low-light validation frames with the independent Ultralytics
-boxes through the app's own RGBA path, run two inferences, and exercise camera
-switching, pause, and resume. See [VALIDATION.md](VALIDATION.md) for the recorded results.
+boxes through the app's own RGBA path, run two inferences, exercise camera switching,
+pause, and resume, and check the Transmitter screen (whole image in landscape, keep-awake
+and brightness flags, About Us navigation, controls auto-hide). See
+[VALIDATION.md](VALIDATION.md) for the recorded results.
 
 ## Pixel 8a screenshots
 
@@ -195,16 +214,9 @@ by the end-to-end device test. One box, **Transmitter 76%**, at the reference po
 
 ![One Transmitter box drawn by the app on the Pixel 8a](Docs/Screenshots/annotated-angled-frame.png)
 
-| Ready | Live inference status | Settings |
-| --- | --- | --- |
-| ![Ready](Docs/Screenshots/ready-pixel8a.png) | ![Inference status](Docs/Screenshots/inference-status-pixel8a.png) | ![Settings](Docs/Screenshots/settings-pixel8a.png) |
-
-| About | Guide |
-| --- | --- |
-| ![About](Docs/Screenshots/about-pixel8a.png) | ![Guide](Docs/Screenshots/guide-pixel8a.png) |
-
-The live-inference screenshot shows the status line (**0 transmitters · 184 ms**)
-while the camera looked at a dark desk; no box is drawn without a transmitter in view.
+UI screenshots of the combined app (main screen with the Transmitter button, Settings,
+About, Guide, and the Transmitter pattern) are recaptured after each UI change; see
+[VALIDATION.md](VALIDATION.md) for what each capture showed.
 
 ## Label
 
@@ -220,6 +232,9 @@ the earlier HoloCube releases is not packaged.
   checkpoint's dataset context and checksum are in `app/src/main/assets/provenance.json`.
 - Project structure, camera helper, processor layout, preferences, and About screen
   follow [LiFind](https://github.com/denizkarya1999/LiFind).
+- The Transmitter screen and its optical pattern (`transmitter_frame.png`, SHA-256
+  `7b25031ad241596fe8f22cfa3d14c8229c419091e95fff5116146b389f6d6c6e`) come from the
+  former standalone HoloCube Transmitter app, now merged here.
 - The checkpoint was trained with Ultralytics YOLO26 and the Python layer methods are
   adapted from Ultralytics, both under
   [Ultralytics' AGPL-3.0 or Enterprise licensing](https://docs.ultralytics.com/models/yolo26/);

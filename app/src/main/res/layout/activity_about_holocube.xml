@@ -142,32 +142,6 @@
                 android:text="@string/about_university"
                 android:textColor="@color/darkBlue"
                 android:layout_marginTop="8dp" />
-
-            <TextView
-                android:id="@+id/textViewModel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/about_model"
-                android:textColor="@color/darkBlue"
-                android:layout_marginTop="8dp" />
-
-            <TextView
-                android:id="@+id/textViewPaper"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/about_paper"
-                android:textColor="@color/darkBlue"
-                android:textStyle="bold"
-                android:layout_marginTop="8dp" />
-
-            <TextView
-                android:id="@+id/textViewWebsite"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/about_website"
-                android:textColor="@color/darkBlue"
-                android:textStyle="bold"
-                android:layout_marginTop="8dp" />
         </LinearLayout>
     </ScrollView>
 

@@ -28,6 +28,7 @@ import androidx.preference.PreferenceManager
 import com.developer27.holocube.mobile.camera.CameraHelper
 import com.developer27.holocube.mobile.camera.VideoRecorder
 import com.developer27.holocube.mobile.databinding.ActivityMainBinding
+import com.developer27.holocube.mobile.transmitter.TransmitterActivity
 import com.developer27.holocube.mobile.videoprocessing.Settings
 import com.developer27.holocube.mobile.videoprocessing.VideoProcessor
 import com.developer27.holocube.mobile.videoprocessing.TransmitterHelper
@@ -51,7 +52,6 @@ class MainActivity : AppCompatActivity() {
     private var activityResumed = false
     private var permissionRequested = false
     private var modelReady = false
-    private var snapshotShown = false
     private var frameGeneration = 0
     private var lastDetectionFinishedAt = 0L
     private var statusMessage = ""
@@ -86,7 +86,7 @@ class MainActivity : AppCompatActivity() {
     private val textureListener = object : TextureView.SurfaceTextureListener {
         override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
             cameraHelper.configureTransform(width, height)
-            if (activityResumed && allPermissionsGranted() && !snapshotShown) cameraHelper.openCamera()
+            if (activityResumed && allPermissionsGranted()) cameraHelper.openCamera()
         }
         override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {
             cameraHelper.configureTransform(width, height)
@@ -149,12 +149,13 @@ class MainActivity : AppCompatActivity() {
             if (isInferring) stopInference() else startInference()
         }
 
-        viewBinding.TakeSnapshotButton.setOnClickListener {
-            takeSnapshotAndProcessOnce()
-        }
-
         viewBinding.recordButton.setOnClickListener {
             if (videoRecorder.isRecording) stopRecording() else startRecording()
+        }
+
+        // The HoloCube Transmitter: the optical pattern full screen (this activity pauses).
+        viewBinding.transmitterButton.setOnClickListener {
+            startActivity(Intent(this, TransmitterActivity::class.java))
         }
 
         viewBinding.clearButton.setOnClickListener {
@@ -185,7 +186,7 @@ class MainActivity : AppCompatActivity() {
             modelReady = error == null
             if (error != null) {
                 showStatus(getString(R.string.status_detection_stopped, error))
-            } else if (!isInferring && !snapshotShown) {
+            } else if (!isInferring) {
                 showStatus(getString(R.string.status_ready))
             }
         }
@@ -208,10 +209,6 @@ class MainActivity : AppCompatActivity() {
         if (!allPermissionsGranted()) {
             requestPermissionLauncher.launch(CAMERA_PERMISSIONS)
             return
-        }
-        if (snapshotShown) {
-            clearResults()
-            restartCamera()
         }
         cameraHelper.openCamera()
         isInferring = true
@@ -269,57 +266,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ----------------------------
-    // Snapshot: detect one frame and freeze it
-    // ----------------------------
-    private fun takeSnapshotAndProcessOnce() {
-        val vp = videoProcessor ?: return
-        if (isInferring || isProcessingFrame) return
-        if (!allPermissionsGranted()) {
-            requestPermissionLauncher.launch(CAMERA_PERMISSIONS)
-            return
-        }
-        if (!modelReady) {
-            Toast.makeText(this, R.string.status_loading, Toast.LENGTH_SHORT).show()
-            return
-        }
-        if (snapshotShown) {
-            clearResults()
-            restartCamera()
-            Toast.makeText(this, R.string.waiting_for_camera, Toast.LENGTH_SHORT).show()
-            return
-        }
-        if (videoRecorder.isRecording) stopRecording()
-        val snapshot = if (cameraHelper.cameraDevice != null) captureFrame() else null
-        if (snapshot == null) {
-            restartCamera()
-            Toast.makeText(this, R.string.waiting_for_camera, Toast.LENGTH_SHORT).show()
-            return
-        }
-        val generation = frameGeneration
-        isProcessingFrame = true
-        viewBinding.TakeSnapshotButton.isEnabled = false
-        viewBinding.startInferenceButton.isEnabled = false
-        vp.processFrame(snapshot, annotateFrame = true) { result ->
-            if (generation != frameGeneration || !activityResumed) {
-                result?.frame?.recycle()
-                return@processFrame
-            }
-            isProcessingFrame = false
-            viewBinding.TakeSnapshotButton.isEnabled = true
-            viewBinding.startInferenceButton.isEnabled = true
-            if (result == null) {
-                Toast.makeText(this, R.string.could_not_process, Toast.LENGTH_LONG).show()
-                return@processFrame
-            }
-            snapshotShown = true
-            viewBinding.processedFrameView.setImageBitmap(result.frame)
-            viewBinding.processedFrameView.visibility = View.VISIBLE
-            showStatus(getString(R.string.status_snapshot, result.detections.size, result.inferenceMillis))
-            cameraHelper.closeCamera()
-        }
-    }
-
-    // ----------------------------
     // Data collection recording (headset button B)
     // ----------------------------
     private fun startRecording() {
@@ -330,10 +276,6 @@ class MainActivity : AppCompatActivity() {
         if (!recordingPermissionsGranted()) {
             requestRecordingPermissionLauncher.launch(RECORDING_PERMISSIONS)
             return
-        }
-        if (snapshotShown) {
-            clearResults()
-            restartCamera()
         }
         if (cameraHelper.cameraDevice == null) {
             restartCamera()
@@ -372,9 +314,7 @@ class MainActivity : AppCompatActivity() {
         frameGeneration++
         isInferring = false
         isProcessingFrame = false
-        snapshotShown = false
         viewBinding.startInferenceButton.isEnabled = true
-        viewBinding.TakeSnapshotButton.isEnabled = true
         viewBinding.startInferenceButton.text = getString(R.string.start_inference)
         viewBinding.startInferenceButton.backgroundTintList = ContextCompat.getColorStateList(this, R.color.blue)
         viewBinding.processedFrameView.visibility = View.GONE
@@ -435,7 +375,7 @@ class MainActivity : AppCompatActivity() {
         cameraHelper.startBackgroundThread()
         applyDetectionSettings()
         if (allPermissionsGranted()) {
-            if (viewBinding.viewFinder.isAvailable && !snapshotShown) cameraHelper.openCamera()
+            if (viewBinding.viewFinder.isAvailable) cameraHelper.openCamera()
         } else if (!permissionRequested) {
             permissionRequested = true
             requestPermissionLauncher.launch(CAMERA_PERMISSIONS)

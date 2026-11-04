@@ -123,9 +123,9 @@ class VideoProcessor(private val context: Context) {
     }
 
     /**
-     * Detects objects in [bitmap] (recycled afterwards). With [annotateFrame] false the
-     * result is a transparent overlay of boxes sized like the frame; with true the boxes
-     * are drawn onto a copy of the frame itself (used by Snapshot).
+     * Detects the transmitter in [bitmap] (recycled afterwards). With [annotateFrame]
+     * false the result is a transparent overlay sized like the frame; with true the box
+     * is drawn onto a copy of the frame itself (used by the device tests and tools).
      */
     fun processFrame(bitmap: Bitmap, annotateFrame: Boolean = false, callback: (FrameResult?) -> Unit) {
         if (closed) {
@@ -186,7 +186,7 @@ class VideoProcessor(private val context: Context) {
             loggedFirstDetection = true
         }
 
-        // 4) Drawing: onto the frame (snapshot) or a transparent overlay (live view)
+        // 4) Drawing: onto the frame (tests) or a transparent overlay (live view)
         val canvas: Mat = if (annotateFrame) {
             frameMat
         } else {
