@@ -47,7 +47,7 @@ SHA-256 `c65a872004784b0f03b099520c81a40414bb33d39e7124f4f65c3fcc03dffcd6`.
   **89 ms**, status line **0 transmitters · 149 ms** facing the ceiling) and a
   three-second recording saved `Movies/HoloCube/HoloCube_20261104_154517_045.mp4`
   with `HOLOCUBE_VIDEO_STARTED`, `HOLOCUBE_VIDEO_SAVING`, and `HOLOCUBE_VIDEO_SAVED`.
-- Screenshots (in `Docs/Screenshots`): the three round buttons show **Transmitter**,
+- Screenshots (in `Screenshots/`, numbered 1–7; 8 is the annotated frame): the three round buttons show **Transmitter**,
   **Start Inference** / **Stop Inference**, and **Record** / **Stop** on one line each;
   the recording badge and paused status; the Settings page with the confidence slider
   and CPU threads only; the About page with only the project details and
@@ -123,7 +123,7 @@ Chaquopy's `.imy` archives and the native libraries are stored uncompressed by d
   - **end to end**: the angled frame as a bitmap goes through OpenCV letterboxing,
     the Python runtime, the single-box parser, and the OpenCV drawing, yielding
     exactly one Transmitter at confidence 0.759 at the reference position with a
-    maize outline on the frame (saved as `Docs/Screenshots/annotated-angled-frame.png`);
+    maize outline on the frame (saved as `Screenshots/8.png`);
   - `VideoProcessor` loads the checkpoint, processes a black frame annotated in place
     and a white frame as an overlay, returns frames of the same size, and does not
     mutate an already returned frame;

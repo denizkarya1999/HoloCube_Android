@@ -125,7 +125,7 @@ HoloCube_Android/
 ├── app/src/androidTest/                    Device: checkpoint load, angled/low-light parity, camera lifecycle, transmitter screen
 ├── Tools/setup-python.sh                   Isolated Python 3.8 for Chaquopy's pip step
 ├── Docs/DEVELOPMENT.md                     Versions, runtime flow, headset differences
-├── Docs/Screenshots/                       Pixel 8a screenshots
+├── Screenshots/                            Pixel 8a screenshots 1.png … 8.png
 ├── VALIDATION.md                           Checks actually performed
 ├── .github/workflows/android.yml           CI: unit tests, debug APK, lint
 └── LICENSE                                 AGPL-3.0 (see Credits and licenses)
@@ -206,25 +206,23 @@ and brightness flags, About Us navigation, controls auto-hide). See
 
 ## Pixel 8a screenshots
 
-Captured on a Google Pixel 8a (Android 17) on November 4, 2026.
+Captured on a Google Pixel 8a (Android 17) on November 4, 2026, in the
+[Screenshots](Screenshots) folder.
 
-**Transmitter found on the phone:** the angled validation frame, run on the Pixel 8a
+| | | |
+| --- | --- | --- |
+| **1** Ready ![1](Screenshots/1.png) | **2** Live inference status ![2](Screenshots/2.png) | **3** Recording ![3](Screenshots/3.png) |
+| **4** Settings ![4](Screenshots/4.png) | **5** About ![5](Screenshots/5.png) | **6** Guide ![6](Screenshots/6.png) |
+
+**7** Transmitter screen (landscape, About Us revealed by a tap):
+
+![7](Screenshots/7.png)
+
+**8** Transmitter found on the phone: the angled validation frame, run on the Pixel 8a
 through the app's own OpenCV letterbox, Python runtime, single-box parser, and drawing
 by the end-to-end device test. One box, **Transmitter 76%**, at the reference position.
 
-![One Transmitter box drawn by the app on the Pixel 8a](Docs/Screenshots/annotated-angled-frame.png)
-
-| Ready | Live inference status | Recording |
-| --- | --- | --- |
-| ![Ready](Docs/Screenshots/ready-pixel8a.png) | ![Inference status](Docs/Screenshots/inference-status-pixel8a.png) | ![Recording](Docs/Screenshots/recording-pixel8a.png) |
-
-| Settings | About | Guide |
-| --- | --- | --- |
-| ![Settings](Docs/Screenshots/settings-pixel8a.png) | ![About](Docs/Screenshots/about-pixel8a.png) | ![Guide](Docs/Screenshots/guide-pixel8a.png) |
-
-**Transmitter screen** (landscape, About Us revealed by a tap):
-
-![Transmitter pattern on the Pixel 8a](Docs/Screenshots/transmitter-pixel8a.png)
+![8](Screenshots/8.png)
 
 The live-inference screenshot shows the status line (**0 transmitters · 149 ms**)
 while the camera looked at the ceiling; no box is drawn without a transmitter in view.
