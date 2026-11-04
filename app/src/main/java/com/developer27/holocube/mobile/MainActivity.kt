@@ -30,12 +30,12 @@ import com.developer27.holocube.mobile.camera.VideoRecorder
 import com.developer27.holocube.mobile.databinding.ActivityMainBinding
 import com.developer27.holocube.mobile.videoprocessing.Settings
 import com.developer27.holocube.mobile.videoprocessing.VideoProcessor
-import com.developer27.holocube.mobile.videoprocessing.YOLO26Helper
+import com.developer27.holocube.mobile.videoprocessing.TransmitterHelper
 import kotlin.math.max
 import kotlin.math.roundToInt
 
 /**
- * Start here: camera frame → YOLO26 detections → boxes over the live preview.
+ * Start here: camera frame → transmitter detection → one box over the live preview.
  *
  * Phone edition of the headset's MainApp. The controller buttons map to on-screen buttons:
  * A → Start/Stop Inference, hold B → Record/Stop, X → About, Y → Settings, Menu → Guide.
@@ -58,7 +58,7 @@ class MainActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private val restoreStatus = Runnable { viewBinding.statusText.text = statusMessage }
     private val preferenceListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-        if (key in setOf(KEY_CONFIDENCE, KEY_MAX_DETECTIONS, KEY_CPU_THREADS)) applyDetectionSettings()
+        if (key in setOf(KEY_CONFIDENCE, KEY_CPU_THREADS)) applyDetectionSettings()
     }
 
     private val CAMERA_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
@@ -71,7 +71,6 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         const val KEY_CONFIDENCE = "confidence_threshold"
-        const val KEY_MAX_DETECTIONS = "max_detections"
         const val KEY_CPU_THREADS = "cpu_threads"
 
         /** "Inference Mode: Off" stays visible this long, as on the headset. */
@@ -195,12 +194,10 @@ class MainActivity : AppCompatActivity() {
     private fun applyDetectionSettings() {
         Settings.Inference.confidenceThreshold =
             sharedPreferences.getInt(KEY_CONFIDENCE, 35).coerceIn(5, 100) / 100f
-        Settings.Inference.maxDetections =
-            sharedPreferences.getInt(KEY_MAX_DETECTIONS, 24).coerceIn(1, 80)
         val threads = sharedPreferences.getString(KEY_CPU_THREADS, "4")?.toIntOrNull()?.coerceIn(1, 8) ?: 4
         if (threads != Settings.Inference.cpuThreads) {
             Settings.Inference.cpuThreads = threads
-            YOLO26Helper.setThreads(threads)
+            TransmitterHelper.setThreads(threads)
         }
     }
 

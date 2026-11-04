@@ -7,7 +7,7 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SeekBarPreference
 
-/** The same two detection settings as the headset's Settings page, plus PyTorch CPU threads. */
+/** The headset's Settings page: adjustable confidence, a fixed box count of 1, plus PyTorch CPU threads. */
 class SettingsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,12 +27,6 @@ class SettingsActivity : AppCompatActivity() {
             findPreference<SeekBarPreference>(MainActivity.KEY_CONFIDENCE)?.setOnPreferenceChangeListener { _, newValue ->
                 val percent = (newValue as Int).coerceIn(5, 100)
                 Toast.makeText(context, "Confidence threshold set to ${"%.2f".format(percent / 100f)}", Toast.LENGTH_SHORT).show()
-                true
-            }
-
-            findPreference<SeekBarPreference>(MainActivity.KEY_MAX_DETECTIONS)?.setOnPreferenceChangeListener { _, newValue ->
-                val boxes = (newValue as Int).coerceIn(1, 80)
-                Toast.makeText(context, "Number of boxes set to $boxes", Toast.LENGTH_SHORT).show()
                 true
             }
 

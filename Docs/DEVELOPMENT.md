@@ -1,10 +1,12 @@
 # Build and development notes
 
-HoloCube Android loads the original `yolo26n.pt` with Python `torch.load` on the phone,
-exactly like the Quest app. Its SHA-256 is checked before loading. There is no model
-export or conversion. `checkpoint_runtime.py` is the same file as the headset's; it
-supplies inference-only module methods adapted from Ultralytics 8.4.56 and restores the
-checkpoint's saved module structure and weights directly.
+HoloCube Android loads the trained `holocube_transmitter.pt` with Python `torch.load`
+on the phone, exactly like the Quest app. Its SHA-256 is checked before loading, and the
+loader refuses any checkpoint whose class mapping is not exactly `0: Transmitter`. The
+supplied `.pt` is embedded unchanged; deployment performs no further export or conversion.
+`checkpoint_runtime.py` is the same file as the headset's; it supplies inference-only
+module methods adapted from Ultralytics 8.4.56 and restores the checkpoint's saved module
+structure and weights directly.
 
 | Component | Version |
 | --- | --- |
@@ -16,7 +18,7 @@ checkpoint's saved module structure and weights directly.
 | Embedded Python | 3.8 |
 | Embedded PyTorch | 1.8.1, CPU (`torch-1.8.1-3-cp38-cp38-android_21_arm64_v8a`) |
 | Embedded NumPy | 1.19.5 |
-| Model | Original Ultralytics YOLO26n `.pt` checkpoint |
+| Model | Trained single-class YOLO26n transmitter `.pt` checkpoint |
 | Android | ARM64; minimum API 26 (Android 8.0), target API 34 |
 
 Python 3.8 is the newest version with a prebuilt Android PyTorch wheel on Chaquopy's
@@ -52,18 +54,21 @@ emulator build (the ARM wheel is not used then; do not ship that APK).
    letterboxes it into 320 × 320 with RGB 114 padding using OpenCV (`resize` with
    bilinear interpolation, then `copyMakeBorder`).
 3. `PyTorchWorker` runs `holocube_runtime.detect_rgba` on one background thread.
-   The Python code drops the alpha channel, normalizes to 0–1, and runs the original
+   The Python code drops the alpha channel, normalizes to 0–1, and runs the transmitter
    checkpoint. Only one frame is processed at a time.
-4. `YOLO26Helper.parseRows` reads the `[1,300,6]` rows `[x1,y1,x2,y2,confidence,class_id]`,
-   removes weak or invalid rows, maps the boxes through `ImageLetterbox` back to frame
-   pixels, sorts by confidence, and keeps at most **Number of boxes**. No second NMS pass.
-5. `VideoProcessor` draws maize boxes with blue label chips (`label  87%`) on a
+4. `TransmitterHelper.parseRows` reads the `[1,300,6]` rows `[x1,y1,x2,y2,confidence,class_id]`,
+   removes weak, wrong-class, or invalid rows, maps the boxes through `ImageLetterbox`
+   back to frame pixels, sorts by confidence, and keeps only the strongest one
+   (`TransmitterHelper.MAX_DETECTIONS = 1`, fixed; Settings cannot raise it). No second
+   NMS pass. The first selected box logs `HOLOCUBE_TRANSMITTER_SINGLE_BOX`.
+5. `VideoProcessor` draws a maize box with a blue label chip (`Transmitter  98%`) on a
    transparent overlay the size of the frame and hands it to `processedFrameView`, which
    sits over the live preview. **Snapshot** draws onto the frame itself and freezes it.
 
 Input is `[1,3,320,320]` float32; output is `[1,300,6]`. The startup check in
-`holocube_runtime.initialize` runs the bundled reference tensor and must reproduce the
-five recorded detections before camera frames are accepted.
+`holocube_runtime.initialize` verifies that the reference belongs to this checkpoint,
+runs the bundled bright transmitter frame, and must reproduce the recorded box within
+0.001 confidence and 1 original-image pixel before camera frames are accepted.
 
 ## Differences from the headset
 
@@ -74,31 +79,34 @@ five recorded detections before camera frames are accepted.
 | Controller buttons | On-screen buttons, joystick settings become sliders |
 | Hold B to record | Tap Record, tap Stop |
 | 2 PyTorch threads | 4 by default, adjustable in Settings |
+| Joystick adjusts confidence; box count fixed at 1 | Slider adjusts confidence; box count fixed at 1 |
 
 ## Checkpoints
 
-The source URL, hash, and runtime versions are recorded in
-`app/src/main/assets/provenance.json`, copied from the Quest repository. The loader
-supports this bundled YOLO26n checkpoint only. For custom weights or another YOLO
-architecture, update the allowed checkpoint hash, supported layer methods, class
-names, and the reference fixture together.
+The supplied file's provenance, dataset context, hash, and runtime versions are recorded
+in `app/src/main/assets/provenance.json`, copied from the Quest repository. The loader
+supports only this bundled transmitter checkpoint. For retrained weights, update the
+allowed checkpoint hash in `checkpoint_runtime.py` and `TransmitterHelper`, the class
+name, and the reference fixtures (`reference.*` plus the two device-test fixtures)
+together; the parity checks will refuse a mismatched set.
 
 ## Validation
 
-- `./gradlew :app:testDebugUnitTest`: letterbox geometry and YOLO26 row parsing.
+- `./gradlew :app:testDebugUnitTest`: letterbox geometry and single-box row parsing.
 - `./gradlew :app:connectedDebugAndroidTest` with a phone attached: letterbox pixel
-  layout, label order, a real checkpoint load plus two inferences on device, and
-  camera switching/pause/resume survival.
+  layout, the single class name, on-device parity of the angled and low-light
+  validation frames against the Ultralytics boxes through the app's RGBA path, a real
+  checkpoint load plus two inferences, and camera switching/pause/resume survival.
 - Device log markers while the app runs: `HOLOCUBE_PT_DEVICE_PARITY_PASSED`,
-  `HOLOCUBE_PT_READY`, `HOLOCUBE_PT_CAMERA_FRAME`, `HOLOCUBE_VIDEO_STARTED`,
-  `HOLOCUBE_VIDEO_SAVING`, `HOLOCUBE_VIDEO_SAVED`.
+  `HOLOCUBE_PT_READY`, `HOLOCUBE_PT_CAMERA_FRAME`, `HOLOCUBE_TRANSMITTER_SINGLE_BOX`,
+  `HOLOCUBE_VIDEO_STARTED`, `HOLOCUBE_VIDEO_SAVING`, `HOLOCUBE_VIDEO_SAVED`.
 
 See [recorded validation](../VALIDATION.md) for the checks actually performed.
 
 ## Sources and licenses
 
 - [HoloCube Quest app](https://github.com/denizkarya1999/HoloCube): Python runtime,
-  checkpoint, labels, fixtures, and UI wording.
+  trained transmitter checkpoint, class name, parity fixtures, and UI wording.
 - [LiFind](https://github.com/denizkarya1999/LiFind): Kotlin project structure,
   Camera2 helper, OpenCV frame processing, preferences, and About screen.
 - [Ultralytics module source, version 8.4.56](https://github.com/ultralytics/ultralytics/tree/v8.4.56/ultralytics/nn).

@@ -4,22 +4,27 @@ import android.content.Context
 
 /**
  * Helper that:
- *  - Loads/caches the embedded PyTorch runtime holding the original yolo26n.pt
- *  - Loads the 80 COCO labels in class-ID order
- *  - Parses YOLO26's end-to-end output rows and removes weak or invalid results
+ *  - Loads/caches the embedded PyTorch runtime holding the trained Transmitter Recognition Model
+ *  - Loads the single class name (`0: Transmitter`) and checks it
+ *  - Parses YOLO26's end-to-end output rows and keeps only the strongest valid Transmitter
  *
- * YOLO26's one-to-one head already selects objects, so no NMS is applied
- * (the same rule as the Quest app's DetectionFilter).
+ * YOLO26's one-to-one head already selects objects, so no NMS is applied, and the
+ * transmitter pipeline keeps at most one box (the same rules as the Quest app's
+ * DetectionFilter and TransmitterInference).
  */
-object YOLO26Helper {
+object TransmitterHelper {
 
     const val INPUT_SIZE = 320
     const val OUTPUT_ROWS = 300
     const val OUTPUT_COLUMNS = 6
-    const val CHECKPOINT_FILE = "yolo26n.pt"
-    const val CHECKPOINT_SHA256 = "9b09cc8bf347f0fc8a5f7657480587f25db09b34bf33b0652110fb03a8ad4fef"
-    const val DEFAULT_CLASS_COUNT = 80
-    private const val LABELS_ASSET_NAME = "coco.names.txt"
+    const val CHECKPOINT_FILE = "holocube_transmitter.pt"
+    const val CHECKPOINT_SHA256 = "3da988ae9e3aa5a66b175adb6275463d21f48828faac5ad77ebd0465570e7cf5"
+    const val CLASS_NAME = "Transmitter"
+    const val CLASS_COUNT = 1
+
+    /** The pipeline always keeps only the highest-confidence valid Transmitter. */
+    const val MAX_DETECTIONS = 1
+    private const val LABELS_ASSET_NAME = "transmitter.names.txt"
 
     @Volatile
     private var worker: PyTorchWorker? = null
@@ -56,14 +61,16 @@ object YOLO26Helper {
         }
     }
 
-    /** One object name per line, in class-ID order (same file as the Quest app). */
+    /** One object name per line, in class-ID order; the transmitter model has exactly one. */
     @Synchronized
     fun labels(context: Context): Array<String> {
         labels?.let { return it }
         val names = context.assets.open(LABELS_ASSET_NAME).bufferedReader().useLines { lines ->
             lines.map { it.trim() }.filter { it.isNotEmpty() }.toList()
         }.toTypedArray()
-        check(names.isNotEmpty()) { "The class names file is empty." }
+        check(names.size == CLASS_COUNT && names[0] == CLASS_NAME) {
+            "The Transmitter Recognition Model requires class 0: $CLASS_NAME."
+        }
         labels = names
         return names
     }
@@ -78,14 +85,15 @@ object YOLO26Helper {
     /**
      * Reads YOLO26's final detections. Each row is [left, top, right, bottom,
      * confidence, class ID] in model-input pixels. Boxes are mapped back to the
-     * original frame through [letterbox], sorted by confidence, and limited.
+     * original frame through [letterbox], sorted by confidence, and limited to
+     * [maxDetections] (the transmitter pipeline passes [MAX_DETECTIONS]).
      */
     fun parseRows(
         rows: FloatArray,
         letterbox: ImageLetterbox,
         confidenceThreshold: Float,
-        maxDetections: Int,
-        expectedClasses: Int = DEFAULT_CLASS_COUNT
+        maxDetections: Int = MAX_DETECTIONS,
+        expectedClasses: Int = CLASS_COUNT
     ): List<DetectionResult> {
         check(rows.size == OUTPUT_ROWS * OUTPUT_COLUMNS) {
             "Expected YOLO26 end-to-end output [1, $OUTPUT_ROWS, $OUTPUT_COLUMNS]."

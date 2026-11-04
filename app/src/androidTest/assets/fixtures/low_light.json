@@ -1,0 +1,25 @@
+{
+  "checkpoint_sha256": "3da988ae9e3aa5a66b175adb6275463d21f48828faac5ad77ebd0465570e7cf5",
+  "source_image": "holocube_frame_0047.png",
+  "source_sha256": "6449229aa33c0e9bc832fc0ad14f27cd3b531cff569b8427b26779959a287d65",
+  "source_dataset": "HoloCube_Transmitter_YOLO26_300frames_20261023.zip",
+  "source_dataset_sha256": "2c0bbe30ff0ce3a5af869dbc1591d12a6f23aa8fad8d073fa3daf42a800cfcc6",
+  "source_split": "val",
+  "width": 640,
+  "height": 480,
+  "input_size": 320,
+  "threshold": 0.35,
+  "oracle": "Ultralytics 8.4.56 / PyTorch 2.12.0+cu130, supplied unfused detection model",
+  "detections": [
+    {
+      "classId": 0,
+      "confidence": 0.9450350999832153,
+      "box": [
+        90.95401000976562,
+        159.11061096191406,
+        284.7801208496094,
+        271.7696838378906
+      ]
+    }
+  ]
+}

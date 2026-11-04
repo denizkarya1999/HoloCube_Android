@@ -8,7 +8,7 @@ from pathlib import Path
 import json
 import numpy as np
 import torch
-from checkpoint_runtime import load_model
+from checkpoint_runtime import load_model, CHECKPOINT_SHA256
 
 _model = None
 MODEL_SIZE = 320
@@ -22,16 +22,20 @@ def initialize(threads=4):
     global _model
     set_threads(threads)
     if _model is None:
-        _model = load_model(str(Path(__file__).with_name('yolo26n.pt')))
+        candidate = load_model(str(Path(__file__).with_name('holocube_transmitter.pt')))
         # Check the actual Android runtime against an independent real-image oracle.
         folder = Path(__file__).parent
         reference = json.loads((folder / 'reference.json').read_text())
+        if reference['checkpoint_sha256'] != CHECKPOINT_SHA256:
+            raise RuntimeError('Checkpoint startup check: reference belongs to another model.')
         data = np.fromfile(str(folder / 'reference.f32'), dtype='<f4').reshape(1, 3, MODEL_SIZE, MODEL_SIZE)
         with torch.no_grad():
-            rows = _model(torch.from_numpy(data)).numpy()[0]
-        found = rows[rows[:, 4] >= .35]
+            rows = candidate(torch.from_numpy(data)).numpy()[0]
+        if rows.shape != (300, 6) or not np.isfinite(rows).all():
+            raise RuntimeError('Checkpoint startup check: invalid detection rows.')
+        found = rows[rows[:, 4] >= reference['threshold']]
         expected = reference['detections']
-        if len(found) != len(expected):
+        if not expected or len(found) != len(expected):
             raise RuntimeError('Checkpoint startup check: wrong detection count.')
         scale = max(reference['width'], reference['height']) / MODEL_SIZE
         for row, other in zip(found, expected):
@@ -39,7 +43,8 @@ def initialize(threads=4):
                 abs(float(row[4]) - other['confidence']) >= .001 or
                 np.linalg.norm((row[:4] - other['box']) * scale) >= 1):
                 raise RuntimeError('Checkpoint startup check: inference differs from reference.')
-    return 'HOLOCUBE_PT_DEVICE_PARITY_PASSED: original checkpoint; five reference detections match.'
+        _model = candidate
+    return 'HOLOCUBE_PT_DEVICE_PARITY_PASSED: Transmitter Recognition Model; reference boxes match.'
 
 
 def rgba_to_tensor(rgba):
@@ -52,7 +57,7 @@ def rgba_to_tensor(rgba):
 
 def detect_rgba(rgba):
     if _model is None:
-        raise RuntimeError('Load the checkpoint before detecting objects.')
+        raise RuntimeError('Load the transmitter checkpoint before detecting.')
     with torch.no_grad():
         result = _model(rgba_to_tensor(rgba))
     if tuple(result.shape) != (1, 300, 6):

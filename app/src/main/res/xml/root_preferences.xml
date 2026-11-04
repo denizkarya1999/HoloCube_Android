@@ -2,7 +2,7 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <!-- Same two settings as the Quest Settings page, plus the model's CPU thread count -->
+    <!-- The Quest Settings page: adjustable confidence, fixed box count, plus the model's CPU thread count -->
     <PreferenceCategory
         android:title="Settings"
         android:layout="@layout/preference_category_layout">
@@ -11,22 +11,21 @@
             android:key="confidence_threshold"
             android:layout="@layout/preference_seekbar_layout"
             android:title="Confidence Thresholds"
-            android:summary="Minimum confidence in percent. Raise it to show fewer uncertain detections."
+            android:summary="Minimum confidence in percent. Below it, no transmitter box is shown."
             android:defaultValue="35"
             android:max="100"
             app:min="5"
             app:seekBarIncrement="5"
             app:showSeekBarValue="true" />
 
-        <SeekBarPreference
-            android:key="max_detections"
-            android:layout="@layout/preference_seekbar_layout"
-            android:title="Number of boxes"
-            android:summary="Maximum number of detections drawn per frame."
-            android:defaultValue="24"
-            android:max="80"
-            app:min="1"
-            app:showSeekBarValue="true" />
+        <!-- The transmitter pipeline always keeps only the strongest valid detection. -->
+        <Preference
+            android:key="max_detections_fixed"
+            android:layout="@layout/preference_list_layout"
+            android:title="Number of boxes (fixed)"
+            android:summary="1: the highest-confidence Transmitter above the threshold"
+            android:selectable="false"
+            android:persistent="false" />
 
         <ListPreference
             android:key="cpu_threads"

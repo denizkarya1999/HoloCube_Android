@@ -45,8 +45,6 @@ object Settings {
     object Inference {
         /** Minimum confidence: 0.35 means 35% (Quest default). */
         @Volatile var confidenceThreshold: Float = 0.35f
-        /** Maximum number of boxes drawn per frame (Quest default). */
-        @Volatile var maxDetections: Int = 24
         /** Background CPU threads used by PyTorch. */
         @Volatile var cpuThreads: Int = 4
     }
@@ -63,7 +61,7 @@ object Settings {
 }
 
 /**
- * Frame processor optimized to:
+ * Frame processor for transmitter recognition, optimized to:
  *  - Reuse CoroutineScope, Mats, and the model input buffer
  *  - Run one frame at a time (the Python worker holds one model)
  *  - Guard OpenCV init
@@ -75,13 +73,14 @@ class VideoProcessor(private val context: Context) {
 
     private val processingMutex = Mutex()
     @Volatile private var closed = false
+    @Volatile private var loggedFirstDetection = false
 
     // --- Reusable OpenCV buffers ---
     // Create Mats only after the native lib is loaded
     private lateinit var frameMat: Mat
     private lateinit var inputMat: Mat
     private lateinit var overlayMat: Mat
-    private var inputBytes = ByteArray(YOLO26Helper.INPUT_SIZE * YOLO26Helper.INPUT_SIZE * 4)
+    private var inputBytes = ByteArray(TransmitterHelper.INPUT_SIZE * TransmitterHelper.INPUT_SIZE * 4)
 
     // Guard against OpenCV init crash loops
     private val opencvLoaded = AtomicBoolean(false)
@@ -108,8 +107,8 @@ class VideoProcessor(private val context: Context) {
         if (closed) return
         scope.launch {
             val error = try {
-                YOLO26Helper.ensureRuntime(context).awaitReady()
-                YOLO26Helper.labels(context)
+                TransmitterHelper.ensureRuntime(context).awaitReady()
+                TransmitterHelper.labels(context)
                 null
             } catch (e: CancellationException) {
                 throw e
@@ -157,7 +156,7 @@ class VideoProcessor(private val context: Context) {
         annotateFrame: Boolean
     ): FrameResult? = withContext(Dispatchers.Default) {
         if (!opencvLoaded.get()) return@withContext null
-        val worker = YOLO26Helper.ensureRuntime(context)
+        val worker = TransmitterHelper.ensureRuntime(context)
         if (!worker.isReady) return@withContext null // Still loading; try the next frame.
         if (bitmap.isRecycled) return@withContext null
 
@@ -172,14 +171,20 @@ class VideoProcessor(private val context: Context) {
         val rows = worker.detect(inputBytes)
         val inferenceMillis = (System.nanoTime() - start) / 1_000_000
 
-        // 3) Decode the one-to-one head; no second NMS pass
-        val detections = YOLO26Helper.parseRows(
+        // 3) Decode the one-to-one head; no second NMS pass. Keep only the strongest
+        //    valid Transmitter, regardless of UI settings (same rule as the headset).
+        val detections = TransmitterHelper.parseRows(
             rows = rows,
             letterbox = letterbox,
             confidenceThreshold = Settings.Inference.confidenceThreshold,
-            maxDetections = Settings.Inference.maxDetections,
-            expectedClasses = YOLO26Helper.labels(context).size
+            maxDetections = TransmitterHelper.MAX_DETECTIONS,
+            expectedClasses = TransmitterHelper.labels(context).size
         )
+        if (!loggedFirstDetection && detections.isNotEmpty()) {
+            Log.i("HoloCube", "HOLOCUBE_TRANSMITTER_SINGLE_BOX: ${detections.size} detection selected; " +
+                "highest confidence; limit ${TransmitterHelper.MAX_DETECTIONS}.")
+            loggedFirstDetection = true
+        }
 
         // 4) Drawing: onto the frame (snapshot) or a transparent overlay (live view)
         val canvas: Mat = if (annotateFrame) {
@@ -222,10 +227,10 @@ class VideoProcessor(private val context: Context) {
                 0
             )
 
-            // Same label as the headset: "person  87%"
+            // Same label as the headset: "Transmitter  98%"
             val confPct = (det.confidence * 100f + 0.5f).toInt()
             labelBuf.clear()
-            labelBuf.append(YOLO26Helper.classNameForId(context, det.classId))
+            labelBuf.append(TransmitterHelper.classNameForId(context, det.classId))
                 .append("  ").append(confPct).append('%')
             val label = labelBuf.toString()
 

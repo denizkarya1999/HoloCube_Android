@@ -1,16 +1,17 @@
-"""Load the original YOLO26n checkpoint with Python/PyTorch; no model export.
+"""Load the trained Transmitter Recognition Model with Python/PyTorch.
 
 Inference-only module methods adapted from Ultralytics 8.4.56, AGPL-3.0.
 https://github.com/ultralytics/ultralytics/tree/v8.4.56/ultralytics/nn
-Only the bundled, checksum-verified YOLO26n checkpoint is supported.
+Only the bundled, checksum-verified, single-class transmitter checkpoint is supported.
 """
 import collections
 import hashlib
 import pickle
+import warnings
 import torch
 from torch import nn
 
-CHECKPOINT_SHA256 = '9b09cc8bf347f0fc8a5f7657480587f25db09b34bf33b0652110fb03a8ad4fef'
+CHECKPOINT_SHA256 = '3da988ae9e3aa5a66b175adb6275463d21f48828faac5ad77ebd0465570e7cf5'
 
 
 class Conv(nn.Module):
@@ -154,9 +155,15 @@ class CheckpointPickle:
 def load_model(path):
     with open(path, 'rb') as stream:
         if hashlib.sha256(stream.read()).hexdigest() != CHECKPOINT_SHA256:
-            raise ValueError('Expected the original bundled YOLO26n checkpoint.')
-    checkpoint = torch.load(path, map_location='cpu', pickle_module=CheckpointPickle)
+            raise ValueError('Expected the bundled Transmitter Recognition Model checkpoint.')
+    # This legacy-format checkpoint includes the training implementation's source.
+    # These inference-only classes intentionally differ; the independent fixture
+    # checks numerical parity. Keep all other serialization warnings visible.
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', torch.serialization.SourceChangeWarning)
+        checkpoint = torch.load(path, map_location='cpu', pickle_module=CheckpointPickle)
     model = checkpoint['model'].float().eval()
-    if not isinstance(model, DetectionModel) or model.model[-1].reg_max != 1:
-        raise ValueError('Expected the YOLO26n detection architecture.')
+    if (not isinstance(model, DetectionModel) or model.model[-1].reg_max != 1 or
+            model.model[-1].nc != 1 or model.names != {0: 'Transmitter'}):
+        raise ValueError('Expected a YOLO26 transmitter detector with class 0: Transmitter.')
     return model

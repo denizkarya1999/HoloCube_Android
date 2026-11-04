@@ -11,7 +11,7 @@ import kotlin.math.roundToInt
 class ImageLetterbox(
     val imageWidth: Int,
     val imageHeight: Int,
-    val modelSize: Int = YOLO26Helper.INPUT_SIZE
+    val modelSize: Int = TransmitterHelper.INPUT_SIZE
 ) {
     init {
         require(imageWidth > 0 && imageHeight > 0 && modelSize > 0) { "Image dimensions must be positive." }

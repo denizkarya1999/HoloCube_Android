@@ -24,38 +24,38 @@
 
     <!-- Status messages (same wording as the Quest app) -->
     <string name="status_loading">HoloCube · Loading object detection…</string>
-    <string name="status_ready">HoloCube · Ready · Press Start Inference</string>
+    <string name="status_ready">HoloCube · Ready · Press Start Inference to find the transmitter</string>
     <string name="status_waiting_permission">Waiting for camera permission…\nAllow camera access to begin</string>
-    <string name="status_paused">YOLO inference paused</string>
-    <string name="status_detecting">HoloCube · Detecting…</string>
+    <string name="status_paused">Transmitter recognition paused</string>
+    <string name="status_detecting">HoloCube · Looking for the transmitter…</string>
     <string name="status_recording_failed">Recording failed. Check microphone access and storage, then try again.</string>
     <string name="status_inference_off">Inference Mode: Off</string>
     <string name="status_detection_stopped">Detection stopped\n%1$s</string>
-    <string name="status_detections" tools:ignore="PluralsCandidate">HoloCube · %1$d objects · %2$d ms</string>
-    <string name="status_snapshot" tools:ignore="PluralsCandidate">HoloCube · Snapshot · %1$d objects · %2$d ms · Press C to resume</string>
+    <string name="status_detections" tools:ignore="PluralsCandidate">HoloCube · %1$d transmitters · %2$d ms</string>
+    <string name="status_snapshot" tools:ignore="PluralsCandidate">HoloCube · Snapshot · %1$d transmitters · %2$d ms · Press C to resume</string>
     <string name="status_saved">Saved to %1$s</string>
     <string name="status_cannot_record">Cannot record\n%1$s</string>
-    <string name="camera_permission_required">Camera permission is required for detection.</string>
-    <string name="recording_permission_required">Microphone access is required to record data-collection videos.</string>
+    <string name="camera_permission_required">Camera permission is required for transmitter recognition.</string>
+    <string name="recording_permission_required">Microphone access is required to record training videos.</string>
     <string name="waiting_for_camera">Waiting for the camera. Tap again.</string>
     <string name="could_not_process">Could not process this frame. Please retry.</string>
 
     <!-- Guide dialog -->
     <string name="guide_title">HoloCube Guide</string>
-    <string name="guide_text">Start Inference: run YOLO26 on live camera frames and draw labelled boxes with confidence percentages.\n\nRecord: save a data-collection MP4 with microphone audio to Movies/HoloCube. Tap Stop to finish.\n\nSnapshot: detect objects in one frame and freeze it. Press C to resume the live camera.\n\n+ / −: zoom. ↺: switch camera. C: clear results.\n\nSettings: confidence threshold, number of boxes, and PyTorch CPU threads.\n\nThe original yolo26n.pt checkpoint runs on this phone with embedded Python and PyTorch. No server or model download is needed.</string>
+    <string name="guide_text">Start Inference: run transmitter recognition on live camera frames. At most one box labelled Transmitter with its confidence percentage is drawn: the strongest valid detection above the threshold.\n\nRecord: save a training video (MP4 with microphone audio) to Movies/HoloCube. Tap Stop to finish.\n\nSnapshot: recognize the transmitter in one frame and freeze it. Press C to resume the live camera.\n\n+ / −: zoom. ↺: switch camera. C: clear results.\n\nSettings: confidence threshold and PyTorch CPU threads. The number of boxes is fixed at 1.\n\nThe trained holocube_transmitter.pt checkpoint runs on this phone with embedded Python and PyTorch. No server or model download is needed.</string>
     <string name="ok">OK</string>
 
     <!-- About page -->
     <string name="about_header">About HoloCube</string>
     <string name="about_designed_for">Designed for: HoloCube Research Project</string>
     <string name="about_version">Version: 1.0</string>
-    <string name="about_platform">Platform: Android phone companion of the Quest 3 / 3S app</string>
+    <string name="about_platform">Platform: Android Smartphone + Meta Quest 3S</string>
     <string name="about_release_date">Release Date: TBD</string>
     <string name="about_developers">Developers: Deniz K. Acikbas and Ahmad Jayeb</string>
     <string name="about_advisor">Advisor: Xiao Zhang</string>
     <string name="about_lab">Lab: Trustworthy AIoT Lab</string>
     <string name="about_university">University: University of Michigan-Dearborn</string>
-    <string name="about_model">Model: Ultralytics YOLO26 nano, original .pt checkpoint, 80 COCO classes</string>
+    <string name="about_model">Model: HoloCube Transmitter Recognition Model (trained YOLO26n, class 0: Transmitter)</string>
     <string name="about_paper">Paper: HoloCube: 3D Optical IoT Connections via Software Defined Pepper’s Ghost (ICNP 2024)</string>
     <string name="about_website">Website: denizkarya1999.github.io</string>
     <string name="um_logo_description">University of Michigan logo</string>

@@ -15,7 +15,7 @@ import java.util.concurrent.Future
 /**
  * Owns one background thread that runs the embedded Python/PyTorch runtime.
  * Kotlin port of the Quest app's PyTorchWorker.java: start Python once, load the
- * original checkpoint, run the startup reference check, then serve one image at a time.
+ * trained transmitter checkpoint, run the startup reference check, then serve one image at a time.
  */
 class PyTorchWorker(context: Context, threads: Int) : Closeable {
     companion object {
@@ -39,7 +39,7 @@ class PyTorchWorker(context: Context, threads: Int) : Closeable {
             }
             val runtime = Python.getInstance().getModule(MODULE)
             Log.i(TAG, runtime.callAttr("initialize", threads).toString())
-            Log.i(TAG, "HOLOCUBE_PT_READY: original YOLO26n checkpoint loaded on device")
+            Log.i(TAG, "HOLOCUBE_PT_READY: Transmitter Recognition Model loaded on device; class 0: Transmitter")
             runtime
         })
     }
