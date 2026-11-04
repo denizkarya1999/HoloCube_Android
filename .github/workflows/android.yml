@@ -19,9 +19,10 @@ jobs:
           distribution: temurin
           java-version: '17'
       # Chaquopy's pip step needs the embedded Python version (3.8) on the build machine.
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.8'
+      # actions/setup-python no longer ships 3.8 for current Ubuntu runners, so use the
+      # same isolated uv-managed interpreter that developers use locally.
+      - name: Install an isolated Python 3.8 for Chaquopy
+        run: bash Tools/setup-python.sh
       - uses: android-actions/setup-android@v3
         with:
           packages: platform-tools
@@ -30,9 +31,7 @@ jobs:
       - name: Install Android SDK components
         run: sdkmanager 'platforms;android-34' 'build-tools;34.0.0'
       - name: Unit tests, debug APK, device-test APK, and Android lint
-        run: >
-          ./gradlew :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug
-          --no-daemon "-Pholocube.buildPython=$(which python3.8)"
+        run: ./gradlew :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug --no-daemon
       - uses: actions/upload-artifact@v4
         with:
           name: HoloCube-Android-debug
