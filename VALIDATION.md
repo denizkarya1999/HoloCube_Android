@@ -7,6 +7,10 @@ instrumented test runs of that session.
 
 ## Combined app with the Transmitter — November 4, 2026
 
+Update later the same day: the launcher label changed from "HoloCube Android" to
+**HoloCube** (`app_name`); the app ID, version, and everything else are unchanged.
+The release APK was rebuilt and redeployed; see the device list below for where.
+
 Changes since the transmitter-recognition edition: About keeps only the project
 details (the **HoloCube** title opens the website); the Snapshot button and the
 "Number of boxes" settings row are gone; the standalone HoloCube Transmitter app is

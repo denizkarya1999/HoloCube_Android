@@ -166,7 +166,7 @@ both roles.
    adb -s PHONE_SERIAL shell am start -n com.developer27.holocube.mobile/.MainActivity
    ```
 
-3. Open **HoloCube Android** and allow camera access. The status line shows
+3. Open **HoloCube** (the launcher label) and allow camera access. The status line shows
    *Loading object detection…* while the checkpoint loads and its startup check runs,
    then *Ready*.
 4. Press **Start Inference** and point the phone at the transmitter. One box labelled
