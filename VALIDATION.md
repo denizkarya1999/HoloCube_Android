@@ -60,6 +60,14 @@ SHA-256 `e085a734cbfd364b5b2f064770f0a30b78ced50eae9e671d6a3a533ae8b494e5`.
     mutating an earlier result; first inference `HOLOCUBE_PT_CAMERA_FRAME: 300 detection
     rows in 155 ms` (one sample, not sustained FPS);
   - the instrumentation context resolves the app package.
+- With the phone unlocked, the four UI instrumented tests: **OK (4 tests)** in 12.8 s,
+  log `Builds/androidTest-pyramid-ui.log`: `cameraSurvivesSwitchingAndPausing` (three
+  camera switches and clears, pause and resume cycles, inference start then pause and
+  resume, during which a live camera frame returned 300 rows in 170 ms) and the three
+  `TransmitterScreenTest` tests (whole image fitted in landscape with keep-awake and full
+  brightness across recreation; About Us opens and Back restores the image; controls
+  auto-hide and reopen). All ten instrumented tests therefore pass on the shipped
+  1.1 build.
 
 Device log markers:
 
@@ -72,9 +80,6 @@ HOLOCUBE_TRANSMITTER_SINGLE_BOX: 1 detection selected; highest confidence; limit
 
 ### Remaining checks
 
-- The four UI instrumented tests (`cameraSurvivesSwitchingAndPausing` and the three
-  `TransmitterScreenTest` tests) were not run: the phone's screen was locked during this
-  session and they need an unlocked display. The code they cover did not change.
 - Live camera detection of the physical transmitter, and whether the smaller pyramid
   box is usable at phone-camera distances.
 - A release build; `Builds/Install HoloCube Android 1.0.apk` is still the 1.0 model.
