@@ -1,6 +1,7 @@
 package com.developer27.holocube.mobile.videoprocessing
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.util.Log
 import kotlinx.coroutines.CancellationException
@@ -43,10 +44,24 @@ class FrameResult(
 
 object Settings {
     object Inference {
+        /** Preference keys of the Settings page. */
+        const val KEY_CONFIDENCE = "confidence_threshold"
+        const val KEY_CPU_THREADS = "cpu_threads"
+
         /** Minimum confidence: 0.35 means 35% (Quest default). */
         @Volatile var confidenceThreshold: Float = 0.35f
         /** Background CPU threads used by PyTorch. */
         @Volatile var cpuThreads: Int = 4
+
+        /** Reads the Settings page values; a changed thread count reaches a running runtime. */
+        fun applyPreferences(preferences: SharedPreferences) {
+            confidenceThreshold = preferences.getInt(KEY_CONFIDENCE, 35).coerceIn(5, 100) / 100f
+            val threads = preferences.getString(KEY_CPU_THREADS, "4")?.toIntOrNull()?.coerceIn(1, 8) ?: 4
+            if (threads != cpuThreads) {
+                cpuThreads = threads
+                TransmitterHelper.setThreads(threads)
+            }
+        }
     }
     object BoundingBox {
         var enableBoundingBox = true

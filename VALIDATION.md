@@ -1,5 +1,60 @@
 # HoloCube Android validation
 
+## In-Device Local File Inference — November 7, 2026
+
+- HoloCube Android **1.2 (code 3)**, package `com.developer27.holocube.mobile`, installed
+  over 1.1 on the connected **Pixel 8a** (`akita`, Android 17, API 37). Same checkpoint
+  as 1.1 (SHA-256 `1b65b56b…`); the change is the new **Settings → Model Testing →
+  In-Device Local File Inference** screen (`LocalFileInferenceActivity`), the
+  `LocalInferenceModel` registry, `ACTION_VIEW` / `ACTION_SEND` image filters, and the
+  shared `Settings.Inference.applyPreferences` helper.
+- 18 frames of the pyramid dataset's testing split (five from each clip) plus the three
+  parity-fixture frames were copied to the phone's `Pictures/HoloCube Test Dataset`
+  with `adb push` and registered with the media store (`content call … scan_file`),
+  so they appear in the system picker and in Photos.
+
+### Passed on the development computer
+
+- `./gradlew :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest
+  :app:lintDebug`: BUILD SUCCESSFUL; 15 unit tests passed, 0 failed (the three new
+  `LocalInferenceModelTest` cases cover the default model, unknown-id fallback, and
+  unique ids/names); lint 0 errors, 11 warnings (`ButtonStyle` / `Overdraw`, cosmetic).
+  A first lint run flagged the `ACTION_VIEW` filter as a deep link without a scheme;
+  explicit `content` and `file` schemes fixed it. Log: `Builds/build-local-inference.log`.
+
+Debug APK: `app/build/outputs/apk/debug/app-debug.apk`, 98,986,578 bytes,
+SHA-256 `8e4f6831e91fed4b43c087a8b71ae90c1e9729bf5b29b81d630b77752af4fe8e`.
+
+### Passed on the connected Pixel 8a
+
+- Real user path: `am start -a android.intent.action.VIEW` with the media-store URI of
+  `reference_angled_frame_03905.jpg` (as a file manager's "Open with HoloCube" would send)
+  opened the screen; the model loaded (`HOLOCUBE_PT_DEVICE_PARITY_PASSED`,
+  `HOLOCUBE_PT_READY`), inference ran (`HOLOCUBE_PT_CAMERA_FRAME: 300 detection rows in
+  139 ms`, `HOLOCUBE_TRANSMITTER_SINGLE_BOX`), and the status line read
+  **`reference_angled_frame_03905.jpg · 1280 × 720 · 1 transmitter · 133 ms`** with
+  **`Transmitter 91% · box left 636, top 274, right 738, bottom 335 px`**; the annotated
+  image showed one maize box on the pyramid. Read back with `uiautomator dump` and a
+  screenshot.
+- New instrumented test `LocalFileInferenceTest.openingTheAngledFixtureShowsOneTransmitterBox`:
+  **OK (1 test)** in 2.7 s on the shipped build (`Builds/androidTest-local-inference.log`).
+  The angled fixture is written as a PNG, opened through the screen's own `openImage`,
+  and yields exactly one Transmitter at the reference confidence (within 0.001) and
+  position (within 1 px), with the status and detail lines reporting it.
+- The ten earlier instrumented tests were not re-run on 1.2; the camera, recording,
+  Transmitter-screen, and parser code did not change.
+
+### Remaining checks
+
+- Picking an image through the system picker by hand (the **Open Image** button) and
+  the Share-sheet route were not exercised in this session; the intent path they both
+  end in was.
+- Screenshots of the new screen for the README (the phone re-locked before they could be
+  taken).
+- Live camera detection of the physical transmitter.
+
+---
+
 ## Pyramid-only Transmitter Recognition Model — November 6, 2026
 
 - HoloCube Android **1.1 (code 2)**, package `com.developer27.holocube.mobile`. Built on

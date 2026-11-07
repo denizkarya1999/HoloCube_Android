@@ -50,6 +50,7 @@ Every headset function has a phone counterpart. Controller buttons become on-scr
 | Startup reference check of the trained checkpoint | Same check; the status line reports model loading and errors |
 | — | Zoom, front/back switch, and **C** to clear, as in LiFind |
 | HoloCube Transmitter (separate phone app) | **Transmitter** button: the optical pattern full screen, landscape, maximum brightness, screen kept awake; tap it for About Us |
+| — | **Settings → Model Testing → In-Device Local File Inference**: open a test image stored on the phone (or share an image to HoloCube) and run the Transmitter Detection Model on it; the box, its confidence, and the inference time are shown. Other models will be listed there as they are added. |
 
 Since version 1.1 the recognition target is the transmitter's **central pyramid** (the
 black inverted hologram prism inside the cube frame) as labelled in the supplied
@@ -100,7 +101,8 @@ HoloCube_Android/
 │   ├── java/com/developer27/holocube/mobile/
 │   │   ├── MainActivity.kt                 Camera → recognition → display, all controls
 │   │   ├── AboutHoloCubeActivity.kt        Project details and links
-│   │   ├── SettingsActivity.kt             Confidence threshold, CPU threads
+│   │   ├── SettingsActivity.kt             Confidence threshold, CPU threads, Model Testing entry
+│   │   ├── LocalFileInferenceActivity.kt   In-Device Local File Inference: open an image, run a model, show the box
 │   │   ├── camera/
 │   │   │   ├── CameraHelper.kt             Camera2 open/close, preview, zoom, switch, record session
 │   │   │   └── VideoRecorder.kt            Training video (MP4 + microphone) to Movies/HoloCube
@@ -110,6 +112,7 @@ HoloCube_Android/
 │   │   └── videoprocessing/
 │   │       ├── VideoProcessor.kt           Frame → letterbox → PyTorch → OpenCV drawing
 │   │       ├── TransmitterHelper.kt        Runtime, class name, single-box parser (no second NMS)
+│   │       ├── LocalInferenceModel.kt      The models offered on the Local File Inference screen
 │   │       ├── PyTorchWorker.kt            One background thread for Python/PyTorch
 │   │       ├── ImageLetterbox.kt           Fit the frame into 320 × 320; map the box back
 │   │       └── BitmapToRgbaTensor.kt       OpenCV letterbox → RGBA bytes for Python
@@ -187,6 +190,15 @@ both roles.
    **Confidence Thresholds** (5–100 %) with a slider and the PyTorch CPU thread count.
    **About** shows the project details; tapping the **HoloCube** title there (or on the
    main screen) opens the developer's website. **Guide** lists the controls.
+8. **Settings → Model Testing → In-Device Local File Inference** tests a model without
+   the camera: choose the model (only the Transmitter Detection Model today), press
+   **Open Image**, and pick any image on the phone. The screen runs the same letterbox,
+   Python runtime, and single-box parser as the live view and shows the annotated image,
+   the box in image pixels, its confidence, and the inference time; **Run Again** repeats
+   it after a settings change. Opening an image *with* HoloCube from a file manager, or
+   sharing one to it, lands on the same screen. The development phone carries 18 frames of
+   the pyramid dataset's testing split in `Pictures/HoloCube Test Dataset` for this
+   purpose (copied with `adb push`; the dataset itself is not in this repository).
 
 The weights and class name are included in the app; no server or model download is
 needed. The debug APK is about 100 MB because it carries the Python and PyTorch runtime.

@@ -28,4 +28,16 @@
             android:defaultValue="4" />
     </PreferenceCategory>
 
+    <!-- Model testing without the camera: run a model on an image stored on this phone -->
+    <PreferenceCategory
+        android:title="Model Testing"
+        android:layout="@layout/preference_category_layout">
+
+        <Preference
+            android:key="local_file_inference"
+            android:layout="@layout/preference_list_layout"
+            android:title="In-Device Local File Inference"
+            android:summary="Open a test image from this phone and run the Transmitter Detection Model on it. Other models will be listed there as they are added." />
+    </PreferenceCategory>
+
 </PreferenceScreen>

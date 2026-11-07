@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Model names in the Local File Inference dropdown: Michigan Blue on the maize card -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/text1"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
+    android:paddingStart="4dp"
+    android:paddingEnd="4dp"
+    android:textColor="@color/darkBlue"
+    android:textSize="16sp"
+    android:textStyle="bold"
+    android:ellipsize="end"
+    android:singleLine="true" />

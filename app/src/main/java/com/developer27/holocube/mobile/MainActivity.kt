@@ -31,7 +31,6 @@ import com.developer27.holocube.mobile.databinding.ActivityMainBinding
 import com.developer27.holocube.mobile.transmitter.TransmitterActivity
 import com.developer27.holocube.mobile.videoprocessing.Settings
 import com.developer27.holocube.mobile.videoprocessing.VideoProcessor
-import com.developer27.holocube.mobile.videoprocessing.TransmitterHelper
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -70,8 +69,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var requestRecordingPermissionLauncher: ActivityResultLauncher<Array<String>>
 
     companion object {
-        const val KEY_CONFIDENCE = "confidence_threshold"
-        const val KEY_CPU_THREADS = "cpu_threads"
+        const val KEY_CONFIDENCE = Settings.Inference.KEY_CONFIDENCE
+        const val KEY_CPU_THREADS = Settings.Inference.KEY_CPU_THREADS
 
         /** "Inference Mode: Off" stays visible this long, as on the headset. */
         private const val INFERENCE_OFF_NOTICE_MS = 3000L
@@ -192,15 +191,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun applyDetectionSettings() {
-        Settings.Inference.confidenceThreshold =
-            sharedPreferences.getInt(KEY_CONFIDENCE, 35).coerceIn(5, 100) / 100f
-        val threads = sharedPreferences.getString(KEY_CPU_THREADS, "4")?.toIntOrNull()?.coerceIn(1, 8) ?: 4
-        if (threads != Settings.Inference.cpuThreads) {
-            Settings.Inference.cpuThreads = threads
-            TransmitterHelper.setThreads(threads)
-        }
-    }
+    private fun applyDetectionSettings() = Settings.Inference.applyPreferences(sharedPreferences)
 
     // ----------------------------
     // Live inference (headset button A)

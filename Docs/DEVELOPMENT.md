@@ -72,6 +72,18 @@ Input is `[1,3,320,320]` float32; output is `[1,300,6]`. The startup check in
 runs the bundled bright transmitter frame, and must reproduce the recorded box within
 0.001 confidence and 1 original-image pixel before camera frames are accepted.
 
+## Local file inference
+
+`LocalFileInferenceActivity` (Settings → Model Testing → In-Device Local File Inference,
+also the target of `ACTION_VIEW` and `ACTION_SEND` for `image/*`) decodes the chosen
+image to a software ARGB_8888 bitmap with its long edge limited to 1920 px
+(`ImageDecoder` on Android 9+, which also applies EXIF orientation; `BitmapFactory`
+below), then calls `VideoProcessor.processFrame(bitmap, annotateFrame = true)`, so the
+result is exactly what the camera screen would draw for that frame. The screen reads the
+Settings values on resume. `LocalInferenceModel` lists the selectable models; a new model
+needs its own helper (checkpoint, class list, reference fixture) and a branch in the
+screen's `when (model)`.
+
 ## Transmitter screen
 
 `transmitter/TransmitterActivity` is the former standalone HoloCube Transmitter app.

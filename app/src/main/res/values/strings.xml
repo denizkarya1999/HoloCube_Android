@@ -42,13 +42,13 @@
 
     <!-- Guide dialog -->
     <string name="guide_title">HoloCube Guide</string>
-    <string name="guide_text">Start Inference: run transmitter recognition on live camera frames. At most one box labelled Transmitter with its confidence percentage is drawn: the strongest valid detection above the threshold.\n\nRecord: save a training video (MP4 with microphone audio) to Movies/HoloCube. Tap Stop to finish.\n\nTransmitter: show the HoloCube optical pattern full screen in landscape at maximum brightness, keeping the display awake. Tap the pattern for About Us; swipe from a screen edge to return.\n\n+ / −: zoom. ↺: switch camera. C: clear results and restart the camera.\n\nSettings: confidence threshold and PyTorch CPU threads.\n\nThe trained holocube_transmitter.pt checkpoint runs on this phone with embedded Python and PyTorch. No server or model download is needed.</string>
+    <string name="guide_text">Start Inference: run transmitter recognition on live camera frames. At most one box labelled Transmitter with its confidence percentage is drawn: the strongest valid detection above the threshold.\n\nRecord: save a training video (MP4 with microphone audio) to Movies/HoloCube. Tap Stop to finish.\n\nTransmitter: show the HoloCube optical pattern full screen in landscape at maximum brightness, keeping the display awake. Tap the pattern for About Us; swipe from a screen edge to return.\n\n+ / −: zoom. ↺: switch camera. C: clear results and restart the camera.\n\nSettings: confidence threshold and PyTorch CPU threads. Settings → In-Device Local File Inference opens a test image stored on this phone (for example in Pictures/HoloCube Test Dataset) and runs the Transmitter Detection Model on it, showing the box, its confidence, and the inference time. Sharing an image to HoloCube opens the same screen.\n\nThe trained holocube_transmitter.pt checkpoint runs on this phone with embedded Python and PyTorch. No server or model download is needed.</string>
     <string name="ok">OK</string>
 
     <!-- About page -->
     <string name="about_header">About HoloCube</string>
     <string name="about_designed_for">Designed for: HoloCube Research Project</string>
-    <string name="about_version">Version: 1.0</string>
+    <string name="about_version">Version: 1.2</string>
     <string name="about_platform">Platform: Android Smartphone + Meta Quest 3S</string>
     <string name="about_release_date">Release Date: TBD</string>
     <string name="about_developers">Developers: Deniz K. Acikbas and Ahmad Jayeb</string>
@@ -56,6 +56,22 @@
     <string name="about_lab">Lab: Trustworthy AIoT Lab</string>
     <string name="about_university">University: University of Michigan-Dearborn</string>
     <string name="um_logo_description">University of Michigan logo</string>
+
+    <!-- Settings → Model Testing → In-Device Local File Inference -->
+    <string name="local_file_inference">In-Device Local File Inference</string>
+    <string name="local_intro">Open an image stored on this phone and run the selected model on it. The box, its confidence, and the inference time are shown. Test images: Pictures/HoloCube Test Dataset.</string>
+    <string name="local_model_label">Model</string>
+    <string name="local_open_image">Open Image</string>
+    <string name="local_run_again">Run Again</string>
+    <string name="local_result_description">The opened image with the detected transmitter box</string>
+    <string name="local_status_loading">Loading the model…</string>
+    <string name="local_status_ready">Model ready · Open an image to test it</string>
+    <string name="local_status_running">Running the model…</string>
+    <string name="local_status_found" tools:ignore="PluralsCandidate">%1$s · %2$d × %3$d · %4$d transmitter · %5$d ms</string>
+    <string name="local_status_none">%1$s · %2$d × %3$d · no transmitter above %4$d%% · %5$d ms</string>
+    <string name="local_status_box">Transmitter %1$d%% · box left %2$d, top %3$d, right %4$d, bottom %5$d px</string>
+    <string name="local_status_error">Could not run the image: %1$s</string>
+    <string name="local_unsupported_image">unsupported or unreadable image</string>
 
     <!-- Links -->
     <string name="url_website" translatable="false">https://denizkarya1999.github.io/</string>
