@@ -1,5 +1,25 @@
 # HoloCube Android validation
 
+## 1.2.1: Local File Inference opens in front — November 7, 2026
+
+- HoloCube Android **1.2.1 (code 4)**: `LocalFileInferenceActivity` gets
+  `android:launchMode="singleTask"`, so an "Open with" or "Share" intent while the screen
+  is already open brings it to the front instead of being delivered to a background
+  instance (seen on 1.2 when a file-manager-style `ACTION_VIEW` was sent twice). No other
+  change.
+- Workstation: `./gradlew :app:testDebugUnitTest :app:assembleDebug
+  :app:assembleDebugAndroidTest :app:lintDebug :app:assembleRelease`: BUILD SUCCESSFUL;
+  15 unit tests passed; lint 0 errors, 11 warnings; `aapt` confirms 1.2.1 / code 4 and the
+  `singleTask` launch mode. Release APK `Install HoloCube Android 1.2.1.apk`,
+  96,670,574 bytes, SHA-256
+  `f2f4415c02da44f1cd536034a553ac8bddd43ac6be30f58f1a5c83fa84c322ea`, uploaded to the
+  Drive `Apps` folder in place of 1.2.
+- **Not verified on a phone:** no device was connected after the change, so the 1.2.1
+  build is not installed anywhere yet and the bring-to-front behaviour is untested; the
+  Pixel 8a and its `Apps` folder still hold 1.2.
+
+---
+
 ## In-Device Local File Inference — November 7, 2026
 
 - HoloCube Android **1.2 (code 3)**, package `com.developer27.holocube.mobile`, installed

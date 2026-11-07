@@ -48,7 +48,7 @@
     <!-- About page -->
     <string name="about_header">About HoloCube</string>
     <string name="about_designed_for">Designed for: HoloCube Research Project</string>
-    <string name="about_version">Version: 1.2</string>
+    <string name="about_version">Version: 1.2.1</string>
     <string name="about_platform">Platform: Android Smartphone + Meta Quest 3S</string>
     <string name="about_release_date">Release Date: TBD</string>
     <string name="about_developers">Developers: Deniz K. Acikbas and Ahmad Jayeb</string>
