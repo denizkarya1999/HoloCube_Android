@@ -34,8 +34,9 @@ SHA-256 `8e4f6831e91fed4b43c087a8b71ae90c1e9729bf5b29b81d630b77752af4fe8e`.
   139 ms`, `HOLOCUBE_TRANSMITTER_SINGLE_BOX`), and the status line read
   **`reference_angled_frame_03905.jpg · 1280 × 720 · 1 transmitter · 133 ms`** with
   **`Transmitter 91% · box left 636, top 274, right 738, bottom 335 px`**; the annotated
-  image showed one maize box on the pyramid. Read back with `uiautomator dump` and a
-  screenshot.
+  image showed one maize box on the pyramid. Read back with `uiautomator dump` and
+  captured as `Screenshots/10.png` (131 ms on the capture run); the Settings page with
+  the new **Model Testing** entry is `Screenshots/11.png`.
 - New instrumented test `LocalFileInferenceTest.openingTheAngledFixtureShowsOneTransmitterBox`:
   **OK (1 test)** in 2.7 s on the shipped build (`Builds/androidTest-local-inference.log`).
   The angled fixture is written as a PNG, opened through the screen's own `openImage`,
@@ -49,8 +50,6 @@ SHA-256 `8e4f6831e91fed4b43c087a8b71ae90c1e9729bf5b29b81d630b77752af4fe8e`.
 - Picking an image through the system picker by hand (the **Open Image** button) and
   the Share-sheet route were not exercised in this session; the intent path they both
   end in was.
-- Screenshots of the new screen for the README (the phone re-locked before they could be
-  taken).
 - Live camera detection of the physical transmitter.
 
 ---

@@ -130,7 +130,7 @@ HoloCube_Android/
 ├── app/src/androidTest/                    Device: checkpoint load, angled/low-light parity, camera lifecycle, transmitter screen
 ├── Tools/setup-python.sh                   Isolated Python 3.8 for Chaquopy's pip step
 ├── Docs/DEVELOPMENT.md                     Versions, runtime flow, headset differences
-├── Screenshots/                            Pixel 8a screenshots 1.png … 8.png
+├── Screenshots/                            Pixel 8a screenshots 1.png … 11.png
 ├── VALIDATION.md                           Checks actually performed
 ├── .github/workflows/android.yml           CI: unit tests, debug APK, lint
 └── LICENSE                                 AGPL-3.0 (see Credits and licenses)
@@ -244,6 +244,15 @@ angled fixture, run on the Pixel 8a on November 7, 2026: one box, **Transmitter 
 around the central pyramid only.
 
 ![9](Screenshots/9.png)
+
+**10** and **11** Version 1.2: the **In-Device Local File Inference** screen after opening
+`reference_angled_frame_03905.jpg` from `Pictures/HoloCube Test Dataset` (one box,
+**Transmitter 91%**, 131 ms, with the box in image pixels), and the Settings page with
+its **Model Testing** entry.
+
+| | |
+| --- | --- |
+| **10** Local file inference ![10](Screenshots/10.png) | **11** Settings with Model Testing ![11](Screenshots/11.png) |
 
 The live-inference screenshot shows the status line (**0 transmitters · 149 ms**)
 while the camera looked at the ceiling; no box is drawn without a transmitter in view.
