@@ -3,9 +3,9 @@
 ## Pyramid-only Transmitter Recognition Model — November 6, 2026
 
 - HoloCube Android **1.1 (code 2)**, package `com.developer27.holocube.mobile`. Built on
-  the development workstation only: no phone was connected, so nothing was installed,
-  the instrumented tests did not run, and the screenshots and device results in the
-  sections below still describe the 1.0 model.
+  the development workstation and installed over 1.0 on the connected **Pixel 8a**
+  (`akita`, Android 17, API 37, arm64-v8a) on November 7, 2026. The screenshots in the
+  sections below still show the 1.0 model except where noted.
 - Model: the checkpoint supplied on November 6 (10,384,601 bytes), byte-identical to the
   Quest repository's file, embedded unchanged. One class, `0: Transmitter`, which now
   means the transmitter's **central pyramid** only; 1.0 boxed the whole assembly. Training
@@ -38,12 +38,43 @@
 Debug APK: `app/build/outputs/apk/debug/app-debug.apk`, 97,863,704 bytes,
 SHA-256 `e085a734cbfd364b5b2f064770f0a30b78ced50eae9e671d6a3a533ae8b494e5`.
 
+### Passed on the connected Pixel 8a
+
+- `adb install -r` of the debug and test APKs over 1.0 succeeded (package information
+  confirms 1.1 / code 2); camera and microphone permissions granted with `pm grant`.
+- Cold launch with the screen locked: the checkpoint loaded and the startup reference
+  check passed on the phone (`HOLOCUBE_PT_DEVICE_PARITY_PASSED`, `HOLOCUBE_PT_READY`);
+  no crash reported.
+- Instrumented tests (`am instrument`, the six non-UI tests): **OK (6 tests)** in 3.3 s,
+  log `Builds/androidTest-pyramid-nonui.log`:
+  - letterbox output is 320 × 320 × 4 bytes with RGB 114 padding in R, G, B order;
+  - the class list is exactly `Transmitter`;
+  - **on-device parity**: the new angled and low-light frames, sent through the app's own
+    RGBA path, reproduce the Ultralytics 8.4.56 / PyTorch 2.12.0 boxes within 0.001
+    confidence and 1 original-image pixel (a quarter of a model-input pixel at 1280 wide);
+  - **end to end**: the angled frame as a bitmap goes through OpenCV letterboxing, the
+    Python runtime, the single-box parser, and the OpenCV drawing, yielding exactly one
+    Transmitter at confidence 0.913 on the pyramid, with a maize outline on the frame
+    (saved as `Screenshots/9.png`); `HOLOCUBE_TRANSMITTER_SINGLE_BOX` logged;
+  - `VideoProcessor` loads the checkpoint and processes a black and a white frame without
+    mutating an earlier result; first inference `HOLOCUBE_PT_CAMERA_FRAME: 300 detection
+    rows in 155 ms` (one sample, not sustained FPS);
+  - the instrumentation context resolves the app package.
+
+Device log markers:
+
+```text
+HOLOCUBE_PT_DEVICE_PARITY_PASSED: Transmitter Recognition Model; reference boxes match.
+HOLOCUBE_PT_READY: Transmitter Recognition Model loaded on device; class 0: Transmitter
+HOLOCUBE_PT_CAMERA_FRAME: 300 detection rows in 155 ms
+HOLOCUBE_TRANSMITTER_SINGLE_BOX: 1 detection selected; highest confidence; limit 1.
+```
+
 ### Remaining checks
 
-- Install on a Pixel 8a and run `connectedDebugAndroidTest`: startup parity on the phone,
-  angled and low-light parity through the app's RGBA path, the end-to-end angled-frame
-  test (its box now covers only the pyramid; `Screenshots/8.png` shows the 1.0 fixture),
-  camera lifecycle, and the Transmitter screen.
+- The four UI instrumented tests (`cameraSurvivesSwitchingAndPausing` and the three
+  `TransmitterScreenTest` tests) were not run: the phone's screen was locked during this
+  session and they need an unlocked display. The code they cover did not change.
 - Live camera detection of the physical transmitter, and whether the smaller pyramid
   box is usable at phone-camera distances.
 - A release build; `Builds/Install HoloCube Android 1.0.apk` is still the 1.0 model.

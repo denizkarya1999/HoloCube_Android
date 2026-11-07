@@ -223,10 +223,15 @@ Captured on a Google Pixel 8a (Android 17) on November 4, 2026, in the
 **8** Transmitter found on the phone: the angled validation frame, run on the Pixel 8a
 through the app's own OpenCV letterbox, Python runtime, single-box parser, and drawing
 by the end-to-end device test. One box, **Transmitter 76%**, at the reference position.
-This screenshot was taken with the version 1.0 model and its whole-assembly fixture;
-the current pyramid-only fixtures have not yet been run on a phone.
+This screenshot was taken with the version 1.0 model and its whole-assembly fixture.
 
 ![8](Screenshots/8.png)
+
+**9** The same end-to-end device test with the version 1.1 pyramid-only model and its new
+angled fixture, run on the Pixel 8a on November 7, 2026: one box, **Transmitter 91%**,
+around the central pyramid only.
+
+![9](Screenshots/9.png)
 
 The live-inference screenshot shows the status line (**0 transmitters · 149 ms**)
 while the camera looked at the ceiling; no box is drawn without a transmitter in view.
