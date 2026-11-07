@@ -25,6 +25,14 @@
 Debug APK: `app/build/outputs/apk/debug/app-debug.apk`, 98,986,578 bytes,
 SHA-256 `8e4f6831e91fed4b43c087a8b71ae90c1e9729bf5b29b81d630b77752af4fe8e`.
 
+Release APK (`./gradlew :app:assembleRelease`, `Builds/build-release-1.2.log`):
+`Install HoloCube Android 1.2.apk`, 96,670,546 bytes, SHA-256
+`852b8683a03d292b137a2ff4f0ca986a4cfa498aa8d1b3532684906ab136205d`; `aapt` reports
+versionCode 3 / versionName 1.2, `arm64-v8a` only; the Python archive holds exactly one
+`.pt` with the approved hash plus the `frame_01153` startup reference. It replaced the
+1.0 file in the phone's `Apps` folder and in the Drive `Apps` folder (the 1.0 copy is in
+Drive's trash), and a local copy is `Builds/Install HoloCube Android 1.2.apk`.
+
 ### Passed on the connected Pixel 8a
 
 - Real user path: `am start -a android.intent.action.VIEW` with the media-store URI of
@@ -44,6 +52,9 @@ SHA-256 `8e4f6831e91fed4b43c087a8b71ae90c1e9729bf5b29b81d630b77752af4fe8e`.
   position (within 1 px), with the status and detail lines reporting it.
 - The ten earlier instrumented tests were not re-run on 1.2; the camera, recording,
   Transmitter-screen, and parser code did not change.
+- The release APK was then installed over the debug build (`adb install -r`; package
+  information confirms 1.2 / code 3) and its cold launch passed the startup reference
+  check on the phone (`HOLOCUBE_PT_DEVICE_PARITY_PASSED`, `HOLOCUBE_PT_READY`).
 
 ### Remaining checks
 
@@ -51,6 +62,8 @@ SHA-256 `8e4f6831e91fed4b43c087a8b71ae90c1e9729bf5b29b81d630b77752af4fe8e`.
   the Share-sheet route were not exercised in this session; the intent path they both
   end in was.
 - Live camera detection of the physical transmitter.
+- The instrumented tests were run against the debug build; the release build differs
+  only in the build type (no minification), and its startup check passed on the phone.
 
 ---
 
