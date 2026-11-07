@@ -1,5 +1,57 @@
 # HoloCube Android validation
 
+## Pyramid-only Transmitter Recognition Model — November 6, 2026
+
+- HoloCube Android **1.1 (code 2)**, package `com.developer27.holocube.mobile`. Built on
+  the development workstation only: no phone was connected, so nothing was installed,
+  the instrumented tests did not run, and the screenshots and device results in the
+  sections below still describe the 1.0 model.
+- Model: the checkpoint supplied on November 6 (10,384,601 bytes), byte-identical to the
+  Quest repository's file, embedded unchanged. One class, `0: Transmitter`, which now
+  means the transmitter's **central pyramid** only; 1.0 boxed the whole assembly. Training
+  run, dataset, and Ultralytics metrics are in `app/src/main/assets/provenance.json`
+  (copied from the Quest repository).
+- Checkpoint SHA-256:
+  `1b65b56bb61c0102bb963e34126d1e58cb0c459f0f14dc5a232262ec62d0e260`
+  (`checkpoint_runtime.py`, `TransmitterHelper`, `reference.json`, and both device-test
+  fixtures carry it).
+- Fixtures replaced with 1280 × 720 validation-split frames of the new dataset:
+  `reference.*` (bright, `frame_01153`), `fixtures/angled` (`frame_03905`), and
+  `fixtures/low_light` (`frame_02444`), reference boxes from Ultralytics 8.4.56 /
+  PyTorch 2.12.0 on the unfused model. `checkpoint_runtime.py` and the fixture files are
+  byte-for-byte the Quest repository's; `holocube_runtime.py` is unchanged.
+- The Quest repository's `Tools/validate-pt.py`, run under PyTorch 1.8.1 (the embedded
+  runtime's version), reproduced all three references within 0.001 confidence and
+  1 original-image pixel and passed its blank-input, RGBA-orientation, reference-mismatch,
+  and altered-checkpoint checks.
+
+### Passed on the development computer
+
+- `./gradlew :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest
+  :app:lintDebug`: BUILD SUCCESSFUL in 45 s; 12 unit tests passed, 0 failed; lint
+  0 errors, 10 warnings (cosmetic, unchanged). Log: `Builds/build-pyramid.log`.
+- APK packaging check (mirrors the Quest build guard): `assets/chaquopy/app.imy` contains
+  exactly one `.pt`, `holocube_transmitter.pt`, whose SHA-256 matches the approved
+  weights, plus `reference.f32` / `reference.json` for the new model; native code
+  `arm64-v8a` only. The test APK carries the two new fixtures.
+
+Debug APK: `app/build/outputs/apk/debug/app-debug.apk`, 97,863,704 bytes,
+SHA-256 `e085a734cbfd364b5b2f064770f0a30b78ced50eae9e671d6a3a533ae8b494e5`.
+
+### Remaining checks
+
+- Install on a Pixel 8a and run `connectedDebugAndroidTest`: startup parity on the phone,
+  angled and low-light parity through the app's RGBA path, the end-to-end angled-frame
+  test (its box now covers only the pyramid; `Screenshots/8.png` shows the 1.0 fixture),
+  camera lifecycle, and the Transmitter screen.
+- Live camera detection of the physical transmitter, and whether the smaller pyramid
+  box is usable at phone-camera distances.
+- A release build; `Builds/Install HoloCube Android 1.0.apk` is still the 1.0 model.
+
+---
+
+## Earlier releases
+
 Verified on November 4, 2026, on the development workstation and a connected
 **Google Pixel 8a** (`akita`, Android 17 build `CP3A.261005.005`, API 37, arm64-v8a).
 Results come from the actual build logs, unit-test reports, device logcat, and

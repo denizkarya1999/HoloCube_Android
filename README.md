@@ -51,10 +51,12 @@ Every headset function has a phone counterpart. Controller buttons become on-scr
 | — | Zoom, front/back switch, and **C** to clear, as in LiFind |
 | HoloCube Transmitter (separate phone app) | **Transmitter** button: the optical pattern full screen, landscape, maximum brightness, screen kept awake; tap it for About Us |
 
-The recognition target is the transmitter assembly (black cube frame, central
-pyramid, and phone/base) as annotated in the supplied dataset. The app does not
-decode optical data or identify individual transmitters; the paper's optical data
-transmission and control channel remain future work, as in the headset app.
+Since version 1.1 the recognition target is the transmitter's **central pyramid** (the
+black inverted hologram prism inside the cube frame) as labelled in the supplied
+dataset; the frame, bracket, and rail lie outside the box. Version 1.0 boxed the whole
+assembly. The app does not decode optical data or identify individual transmitters;
+the paper's optical data transmission and control channel remain future work, as in
+the headset app.
 Further models are planned for this app: `TransmitterHelper` owns the current one,
 and its parser already accepts any class count and box limit, so another model is
 added as a sibling helper with its own checkpoint, class list, and reference fixture.
@@ -221,6 +223,8 @@ Captured on a Google Pixel 8a (Android 17) on November 4, 2026, in the
 **8** Transmitter found on the phone: the angled validation frame, run on the Pixel 8a
 through the app's own OpenCV letterbox, Python runtime, single-box parser, and drawing
 by the end-to-end device test. One box, **Transmitter 76%**, at the reference position.
+This screenshot was taken with the version 1.0 model and its whole-assembly fixture;
+the current pyramid-only fixtures have not yet been run on a phone.
 
 ![8](Screenshots/8.png)
 
