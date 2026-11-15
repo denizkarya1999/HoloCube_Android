@@ -36,6 +36,9 @@
     <string name="status_detections" tools:ignore="PluralsCandidate">HoloCube · %1$d transmitters · %2$d ms</string>
     <string name="status_detections_orientation" tools:ignore="PluralsCandidate">HoloCube · %1$d transmitters · %2$s %3$d%% · %4$d ms</string>
     <string name="status_detections_no_orientation" tools:ignore="PluralsCandidate">HoloCube · %1$d transmitters · no orientation · %2$d ms</string>
+    <string name="status_orientation_only">HoloCube · %1$s %2$d%% · %3$d ms</string>
+    <string name="status_no_orientation_only">HoloCube · no orientation · %1$d ms</string>
+    <string name="status_no_model">HoloCube · No model ticked · Settings → Models to Run</string>
     <string name="status_saved">Saved to %1$s</string>
     <string name="status_cannot_record">Cannot record\n%1$s</string>
     <string name="camera_permission_required">Camera permission is required for transmitter recognition.</string>
@@ -50,7 +53,7 @@
     <!-- About page -->
     <string name="about_header">About HoloCube</string>
     <string name="about_designed_for">Designed for: HoloCube Research Project</string>
-    <string name="about_version">Version: 1.3.2</string>
+    <string name="about_version">Version: 1.4</string>
     <string name="about_platform">Platform: Android Smartphone + Meta Quest 3S</string>
     <string name="about_release_date">Release Date: TBD</string>
     <string name="about_developers">Developers: Deniz K. Acikbas and Ahmad Jayeb</string>
@@ -61,21 +64,24 @@
 
     <!-- Settings → Model Testing → In-Device Local File Inference -->
     <string name="local_file_inference">In-Device Local File Inference</string>
-    <string name="local_intro">Open an image stored on this phone and run the selected model on it. The box, its confidence, and the inference time are shown. Test images: Pictures/HoloCube Test Dataset.</string>
-    <string name="local_model_label">Model</string>
+    <string name="local_intro">Open an image stored on this phone and run the ticked models on it. The box or triangle, its confidence, and the inference time are shown. Test images: Pictures/HoloCube Test Dataset.</string>
+    <string name="local_model_label">Models to run</string>
     <string name="local_open_image">Open Image</string>
     <string name="local_run_again">Run Again</string>
     <string name="local_result_description">The opened image with the detected transmitter box</string>
     <string name="local_status_loading">Loading the model…</string>
     <string name="local_status_ready">Model ready · Open an image to test it</string>
     <string name="local_status_running">Running the model…</string>
-    <string name="local_status_found" tools:ignore="PluralsCandidate">%1$s · %2$d × %3$d · %4$d transmitter · %5$d ms</string>
-    <string name="local_status_none">%1$s · %2$d × %3$d · no transmitter above %4$d%% · %5$d ms</string>
     <string name="local_status_box">Transmitter %1$d%% · box left %2$d, top %3$d, right %4$d, bottom %5$d px</string>
     <string name="local_status_error">Could not run the image: %1$s</string>
-    <string name="local_status_orientation_found">%1$s · %2$d × %3$d · orientation %4$s · %5$d ms</string>
-    <string name="local_status_orientation_none">%1$s · %2$d × %3$d · no orientation above %4$d%% inside the transmitter box · %5$d ms</string>
-    <string name="local_status_orientation_skipped">%1$s · %2$d × %3$d · no transmitter above %4$d%%, so orientation was not run · %5$d ms</string>
+    <string name="local_status_summary">%1$s · %2$d × %3$d · %4$s · %5$d ms</string>
+    <string name="local_status_no_model">Tick at least one model to run</string>
+    <string name="local_part_transmitter_found" tools:ignore="PluralsCandidate">%1$d transmitter</string>
+    <string name="local_part_transmitter_none">no transmitter above %1$d%%</string>
+    <string name="local_part_orientation_found">orientation %1$s</string>
+    <string name="local_part_orientation_none">no orientation above %1$d%%</string>
+    <string name="local_part_orientation_none_in_box">no orientation above %1$d%% inside the transmitter box</string>
+    <string name="local_part_orientation_skipped">orientation not run</string>
     <string name="local_status_triangle">%1$s %2$d%% · triangle (%3$d, %4$d) (%5$d, %6$d) (%7$d, %8$d) px</string>
     <string name="local_orientation_unavailable">The Orientation Detection Model is not available: %1$s</string>
     <string name="local_unsupported_image">unsupported or unreadable image</string>

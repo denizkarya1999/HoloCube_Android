@@ -69,39 +69,56 @@
             android:textSize="13sp"
             android:textColor="@color/darkBlue" />
 
-        <LinearLayout
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:text="@string/local_model_label"
+            android:textStyle="bold"
+            android:textColor="@color/darkBlue" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/local_model_label"
-                android:textStyle="bold"
-                android:textColor="@color/darkBlue"
-                android:paddingEnd="12dp"
-                android:paddingStart="0dp" />
-
-            <Spinner
-                android:id="@+id/modelSpinner"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:backgroundTint="@color/darkBlue"
-                android:popupBackground="@drawable/model_dropdown_background"
-                android:spinnerMode="dropdown" />
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/modelDescription"
+        <!-- Models to run: the same two choices as Settings → Models to Run -->
+        <CheckBox
+            android:id="@+id/transmitterCheck"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:buttonTint="@color/darkBlue"
+            android:textColor="@color/darkBlue"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            tools:text="Transmitter Detection Model" />
+
+        <TextView
+            android:id="@+id/transmitterDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="32dp"
+            android:paddingEnd="0dp"
             android:textSize="12sp"
             android:textColor="@color/darkBlue"
             tools:text="YOLO26n · one class: Transmitter" />
+
+        <CheckBox
+            android:id="@+id/orientationCheck"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:buttonTint="@color/darkBlue"
+            android:textColor="@color/darkBlue"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            tools:text="Orientation Detection Model" />
+
+        <TextView
+            android:id="@+id/orientationDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="32dp"
+            android:paddingEnd="0dp"
+            android:textSize="12sp"
+            android:textColor="@color/darkBlue"
+            tools:text="YOLO26n-seg · eight classes" />
 
         <LinearLayout
             android:layout_width="match_parent"

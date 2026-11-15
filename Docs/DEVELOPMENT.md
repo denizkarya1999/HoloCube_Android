@@ -104,10 +104,14 @@ serialization. The weights are otherwise unchanged; both hashes are in
   given only the cropped box, 9 of 21 with everything outside the box painted gray, and
   20 of 21 with this gate-and-filter rule (25 of 27 with no gate). Cropping needs a model
   retrained on crops.
-- `FramePipeline` selects what runs: `CAMERA` (transmitter, then orientation when
-  **Settings → Orientation Detection** is on), `TRANSMITTER` (transmitter only), or
-  `ORIENTATION` (transmitter, then orientation; the Local File Inference choice reports
-  when no transmitter was found and orientation was therefore not run).
+- `ModelSelection` says what runs: the two **Models to Run** checkboxes
+  (`model_transmitter`, `model_orientation`; Settings and the Local File Inference screen
+  write the same preferences, and `Settings.Inference.applyPreferences` reads them). Both:
+  transmitter, then orientation inside its box as above. Transmitter only: the 1.2
+  behaviour. Orientation only: it runs on every frame with no transmitter gate, and the
+  strongest result is kept. Neither: nothing runs; the camera status line and the Local
+  File screen say so. The 1.3 "Orientation Detection: Off" setting is carried over to the
+  new checkbox once.
 
 On some frames the end-to-end head returns two or three near-identical rows that share
 the confidence, so a visible pyramid can score below the threshold; only the strongest row

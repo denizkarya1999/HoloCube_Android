@@ -49,17 +49,28 @@ class FrameResult(
     val orientations: List<OrientationResult> = emptyList(),
     val orientationMillis: Long = 0,
     val orientationRan: Boolean = false,
-    val orientationUnavailable: String? = null
+    val orientationUnavailable: String? = null,
+    val models: ModelSelection = ModelSelection.BOTH
 )
 
-/** Which models run on a frame. */
-enum class FramePipeline {
-    /** The camera screen: the transmitter, then, inside its box, the orientation when switched on. */
-    CAMERA,
-    /** Model testing: only the Transmitter Detection Model. */
-    TRANSMITTER,
-    /** Model testing: the transmitter, then the Orientation Detection Model inside its box. */
-    ORIENTATION
+/**
+ * Which models run on a frame: the two checkboxes of Settings → Models to Run and of the
+ * Local File Inference screen.
+ *  - Both: the transmitter comes first; the orientation runs only when a transmitter was
+ *    detected and counts only inside its box.
+ *  - Transmitter only, or orientation only (then on the whole frame, with no transmitter gate).
+ *  - Neither: nothing runs.
+ */
+data class ModelSelection(val transmitter: Boolean, val orientation: Boolean) {
+    val isEmpty: Boolean get() = !transmitter && !orientation
+    /** With both models selected the transmitter's box decides whether and where orientation counts. */
+    val orientationNeedsTransmitter: Boolean get() = transmitter && orientation
+
+    companion object {
+        val BOTH = ModelSelection(transmitter = true, orientation = true)
+        /** The selection stored by the Settings page. */
+        fun fromSettings() = ModelSelection(Settings.Inference.runTransmitter, Settings.Inference.runOrientation)
+    }
 }
 
 object Settings {
@@ -67,19 +78,30 @@ object Settings {
         /** Preference keys of the Settings page. */
         const val KEY_CONFIDENCE = "confidence_threshold"
         const val KEY_CPU_THREADS = "cpu_threads"
-        const val KEY_ORIENTATION = "orientation_detection"
+        const val KEY_MODEL_TRANSMITTER = "model_transmitter"
+        const val KEY_MODEL_ORIENTATION = "model_orientation"
+        /** The On/Off list of 1.3; read once as the default of [KEY_MODEL_ORIENTATION]. */
+        private const val KEY_ORIENTATION_LEGACY = "orientation_detection"
 
         /** Minimum confidence: 0.35 means 35% (Quest default). */
         @Volatile var confidenceThreshold: Float = 0.35f
         /** Background CPU threads used by PyTorch. */
         @Volatile var cpuThreads: Int = 4
-        /** Whether the camera screen also runs the Orientation Detection Model on each frame. */
-        @Volatile var orientationEnabled: Boolean = true
+        /** Models to Run: the Transmitter Detection Model checkbox. */
+        @Volatile var runTransmitter: Boolean = true
+        /** Models to Run: the Orientation Detection Model checkbox. */
+        @Volatile var runOrientation: Boolean = true
 
         /** Reads the Settings page values; a changed thread count reaches a running runtime. */
         fun applyPreferences(preferences: SharedPreferences) {
             confidenceThreshold = preferences.getInt(KEY_CONFIDENCE, 35).coerceIn(5, 100) / 100f
-            orientationEnabled = preferences.getString(KEY_ORIENTATION, "on") != "off"
+            runTransmitter = preferences.getBoolean(KEY_MODEL_TRANSMITTER, true)
+            // Carry "Orientation Detection: Off" from 1.3 over to the new checkbox once.
+            if (!preferences.contains(KEY_MODEL_ORIENTATION) &&
+                preferences.getString(KEY_ORIENTATION_LEGACY, "on") == "off") {
+                preferences.edit().putBoolean(KEY_MODEL_ORIENTATION, false).apply()
+            }
+            runOrientation = preferences.getBoolean(KEY_MODEL_ORIENTATION, true)
             val threads = preferences.getString(KEY_CPU_THREADS, "4")?.toIntOrNull()?.coerceIn(1, 8) ?: 4
             if (threads != cpuThreads) {
                 cpuThreads = threads
@@ -167,14 +189,14 @@ class VideoProcessor(private val context: Context) {
     }
 
     /**
-     * Runs the models of [pipeline] on [bitmap] (recycled afterwards). With [annotateFrame]
+     * Runs the selected [models] on [bitmap] (recycled afterwards). With [annotateFrame]
      * false the result is a transparent overlay sized like the frame; with true the box and
      * triangle are drawn onto a copy of the frame itself (used by the device tests and tools).
      */
     fun processFrame(
         bitmap: Bitmap,
         annotateFrame: Boolean = false,
-        pipeline: FramePipeline = FramePipeline.CAMERA,
+        models: ModelSelection = ModelSelection.fromSettings(),
         callback: (FrameResult?) -> Unit
     ) {
         if (closed) {
@@ -184,7 +206,7 @@ class VideoProcessor(private val context: Context) {
         scope.launch {
             val result = try {
                 processingMutex.withLock {
-                    if (closed) null else processFrameInternalYOLO(bitmap, annotateFrame, pipeline)
+                    if (closed) null else processFrameInternalYOLO(bitmap, annotateFrame, models)
                 }
             } catch (e: CancellationException) {
                 throw e
@@ -203,7 +225,7 @@ class VideoProcessor(private val context: Context) {
     private suspend fun processFrameInternalYOLO(
         bitmap: Bitmap,
         annotateFrame: Boolean,
-        pipeline: FramePipeline
+        models: ModelSelection
     ): FrameResult? = withContext(Dispatchers.Default) {
         if (!opencvLoaded.get()) return@withContext null
         val worker = TransmitterHelper.ensureRuntime(context)
@@ -213,7 +235,7 @@ class VideoProcessor(private val context: Context) {
         Utils.bitmapToMat(bitmap, frameMat)
         var detections: List<DetectionResult> = emptyList()
         var inferenceMillis = 0L
-        run {
+        if (models.transmitter) {
             // 1) Frame → RGBA Mat, then the 320 × 320 letterboxed model input
             val letterbox = ImageLetterbox(frameMat.cols(), frameMat.rows())
             BitmapToRgbaTensor.letterbox(frameMat, letterbox, inputMat)
@@ -240,16 +262,17 @@ class VideoProcessor(private val context: Context) {
             }
         }
 
-        // 3b) Orientation Detection Model: only after a transmitter was detected. It sees
-        //     its own 640 × 640 letterbox of the whole frame (it was trained on whole
-        //     frames and fails on a crop), and its result is kept only inside the
-        //     transmitter's box.
-        val wantOrientation = pipeline == FramePipeline.ORIENTATION ||
-            (pipeline == FramePipeline.CAMERA && Settings.Inference.orientationEnabled)
+        // 3b) Orientation Detection Model. With both models selected it runs only after a
+        //     transmitter was detected and its result is kept only inside the transmitter's
+        //     box. Selected alone it runs on every frame. Either way it sees its own
+        //     640 × 640 letterbox of the whole frame (it was trained on whole frames and
+        //     fails on a crop).
+        val wantOrientation = models.orientation
         val transmitter = detections.firstOrNull()
         var orientations: List<OrientationResult> = emptyList()
         var orientationMillis = 0L
-        val orientationRan = wantOrientation && worker.isOrientationReady && transmitter != null
+        val orientationRan = wantOrientation && worker.isOrientationReady &&
+            (!models.orientationNeedsTransmitter || transmitter != null)
         val orientationUnavailable =
             if (wantOrientation && !worker.isOrientationReady) worker.orientationError ?: "not loaded" else null
         if (orientationRan) {
@@ -259,19 +282,20 @@ class VideoProcessor(private val context: Context) {
             val start = System.nanoTime()
             val rows = worker.detectOrientation(orientationBytes)
             orientationMillis = (System.nanoTime() - start) / 1_000_000
-            orientations = OrientationHelper.insideTransmitter(
-                OrientationHelper.parseRows(
-                    rows = rows,
-                    letterbox = letterbox,
-                    confidenceThreshold = Settings.Inference.confidenceThreshold,
-                    maxDetections = OrientationHelper.OUTPUT_ROWS
-                ),
-                transmitter
+            val candidates = OrientationHelper.parseRows(
+                rows = rows,
+                letterbox = letterbox,
+                confidenceThreshold = Settings.Inference.confidenceThreshold,
+                maxDetections = OrientationHelper.OUTPUT_ROWS
             )
+            orientations =
+                if (models.orientationNeedsTransmitter) OrientationHelper.insideTransmitter(candidates, transmitter)
+                else candidates.take(OrientationHelper.MAX_DETECTIONS)
             if (!loggedFirstOrientation && orientations.isNotEmpty()) {
                 Log.i("HoloCube", "HOLOCUBE_ORIENTATION_SINGLE_TRIANGLE: " +
                     OrientationHelper.classNameForId(orientations[0].classId) +
-                    " selected inside the transmitter box; highest confidence; limit ${OrientationHelper.MAX_DETECTIONS}.")
+                    (if (models.orientationNeedsTransmitter) " selected inside the transmitter box" else " selected") +
+                    "; highest confidence; limit ${OrientationHelper.MAX_DETECTIONS}.")
                 loggedFirstOrientation = true
             }
         }
@@ -293,7 +317,7 @@ class VideoProcessor(private val context: Context) {
         val output = Bitmap.createBitmap(canvas.cols(), canvas.rows(), Bitmap.Config.ARGB_8888)
         Utils.matToBitmap(canvas, output)
         FrameResult(output, detections, inferenceMillis, orientations, orientationMillis,
-            orientationRan, orientationUnavailable)
+            orientationRan, orientationUnavailable, models)
     }
 
     /** The triangle over the face, with a "North  93%" chip under its tip. */

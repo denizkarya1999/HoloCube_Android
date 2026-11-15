@@ -29,6 +29,7 @@ import com.developer27.holocube.mobile.camera.CameraHelper
 import com.developer27.holocube.mobile.camera.VideoRecorder
 import com.developer27.holocube.mobile.databinding.ActivityMainBinding
 import com.developer27.holocube.mobile.transmitter.TransmitterActivity
+import com.developer27.holocube.mobile.videoprocessing.ModelSelection
 import com.developer27.holocube.mobile.videoprocessing.OrientationHelper
 import com.developer27.holocube.mobile.videoprocessing.Settings
 import com.developer27.holocube.mobile.videoprocessing.VideoProcessor
@@ -58,7 +59,7 @@ class MainActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private val restoreStatus = Runnable { viewBinding.statusText.text = statusMessage }
     private val preferenceListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-        if (key in setOf(KEY_CONFIDENCE, KEY_CPU_THREADS, KEY_ORIENTATION)) applyDetectionSettings()
+        if (key in setOf(KEY_CONFIDENCE, KEY_CPU_THREADS, KEY_MODEL_TRANSMITTER, KEY_MODEL_ORIENTATION)) applyDetectionSettings()
     }
 
     private val CAMERA_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
@@ -72,7 +73,8 @@ class MainActivity : AppCompatActivity() {
     companion object {
         const val KEY_CONFIDENCE = Settings.Inference.KEY_CONFIDENCE
         const val KEY_CPU_THREADS = Settings.Inference.KEY_CPU_THREADS
-        const val KEY_ORIENTATION = Settings.Inference.KEY_ORIENTATION
+        const val KEY_MODEL_TRANSMITTER = Settings.Inference.KEY_MODEL_TRANSMITTER
+        const val KEY_MODEL_ORIENTATION = Settings.Inference.KEY_MODEL_ORIENTATION
 
         /** "Inference Mode: Off" stays visible this long, as on the headset. */
         private const val INFERENCE_OFF_NOTICE_MS = 3000L
@@ -228,6 +230,11 @@ class MainActivity : AppCompatActivity() {
         val vp = videoProcessor ?: return
         if (isProcessingFrame || !activityResumed || !modelReady) return
         if (SystemClock.uptimeMillis() - lastDetectionFinishedAt < DETECTION_INTERVAL_MS) return
+        if (ModelSelection.fromSettings().isEmpty) {
+            // Settings → Models to Run has neither model ticked.
+            showStatus(getString(R.string.status_no_model))
+            return
+        }
         val bitmap = captureFrame() ?: return
         val generation = frameGeneration
         isProcessingFrame = true
@@ -243,16 +250,21 @@ class MainActivity : AppCompatActivity() {
                 viewBinding.processedFrameView.setImageBitmap(result.frame)
                 val orientation = result.orientations.firstOrNull()
                 val millis = result.inferenceMillis + result.orientationMillis
+                val direction = orientation?.let { OrientationHelper.classNameForId(it.classId) }
+                val percent = orientation?.let { (it.confidence * 100f + 0.5f).toInt() } ?: 0
                 showStatus(
                     when {
+                        // Orientation ticked alone: there is no transmitter count to report.
+                        !result.models.transmitter && direction != null ->
+                            getString(R.string.status_orientation_only, direction, percent, millis)
+                        !result.models.transmitter ->
+                            getString(R.string.status_no_orientation_only, millis)
                         !result.orientationRan ->
                             getString(R.string.status_detections, result.detections.size, result.inferenceMillis)
-                        orientation == null ->
+                        direction == null ->
                             getString(R.string.status_detections_no_orientation, result.detections.size, millis)
                         else -> getString(
-                            R.string.status_detections_orientation, result.detections.size,
-                            OrientationHelper.classNameForId(orientation.classId),
-                            (orientation.confidence * 100f + 0.5f).toInt(), millis
+                            R.string.status_detections_orientation, result.detections.size, direction, percent, millis
                         )
                     }
                 )

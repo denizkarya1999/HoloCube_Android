@@ -11,7 +11,8 @@ import androidx.preference.SeekBarPreference
 
 /**
  * The headset's Settings page: adjustable confidence, a fixed box count of 1, plus
- * PyTorch CPU threads, and the phone-only Model Testing entry (In-Device Local File Inference).
+ * PyTorch CPU threads, the Models to Run checkboxes, and the phone-only Model Testing entry
+ * (In-Device Local File Inference).
  */
 class SettingsActivity : AppCompatActivity() {
 

@@ -19,8 +19,8 @@ android {
         applicationId = "com.developer27.holocube.mobile"
         minSdk = 26
         targetSdk = 34
-        versionCode = 7
-        versionName = "1.3.2"
+        versionCode = 8
+        versionName = "1.4"
 
         ndk {
             // Phones and the Quest share the ARM64 PyTorch wheel.

@@ -10,8 +10,6 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.view.View
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.VisibleForTesting
@@ -20,9 +18,9 @@ import androidx.core.content.IntentCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.developer27.holocube.mobile.databinding.ActivityLocalFileInferenceBinding
-import com.developer27.holocube.mobile.videoprocessing.FramePipeline
 import com.developer27.holocube.mobile.videoprocessing.FrameResult
 import com.developer27.holocube.mobile.videoprocessing.LocalInferenceModel
+import com.developer27.holocube.mobile.videoprocessing.ModelSelection
 import com.developer27.holocube.mobile.videoprocessing.OrientationHelper
 import com.developer27.holocube.mobile.videoprocessing.Settings
 import com.developer27.holocube.mobile.videoprocessing.VideoProcessor
@@ -40,14 +38,13 @@ import kotlin.math.max
  *
  * The same [VideoProcessor] path as the live camera is used, so the result is exactly
  * what the camera screen would draw for that frame. [LocalInferenceModel] lists the
- * models: the Transmitter Detection Model and the Orientation Detection Model.
+ * models: the Transmitter Detection Model and the Orientation Detection Model, each with a checkbox.
  */
 class LocalFileInferenceActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityLocalFileInferenceBinding
     private lateinit var sharedPreferences: SharedPreferences
     private var processor: VideoProcessor? = null
-    private var model = LocalInferenceModel.DEFAULT
     private var modelReady = false
     private var running = false
     private var pendingUri: Uri? = null
@@ -77,21 +74,12 @@ class LocalFileInferenceActivity : AppCompatActivity() {
 
         binding.titleContainer.setOnClickListener { openUrl(getString(R.string.url_website)) }
 
-        val models = LocalInferenceModel.entries
-        binding.modelSpinner.adapter =
-            ArrayAdapter(this, R.layout.spinner_item_model, models.map { it.displayName }).apply {
-                setDropDownViewResource(R.layout.spinner_dropdown_item_model)
-            }
-        binding.modelSpinner.setSelection(models.indexOf(model))
-        binding.modelSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                model = models[position]
-                binding.modelDescription.text = model.description
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) = Unit
-        }
-        binding.modelDescription.text = model.description
+        // Models to run: two checkboxes stored in the same preferences as Settings → Models to Run.
+        binding.transmitterCheck.text = LocalInferenceModel.TRANSMITTER.displayName
+        binding.transmitterDescription.text = LocalInferenceModel.TRANSMITTER.description
+        binding.orientationCheck.text = LocalInferenceModel.ORIENTATION.displayName
+        binding.orientationDescription.text = LocalInferenceModel.ORIENTATION.description
+        showModelSelection()
 
         binding.openImageButton.setOnClickListener { openDocument.launch(arrayOf("image/*")) }
         binding.runAgainButton.setOnClickListener { lastUri?.let(::openImage) }
@@ -123,8 +111,9 @@ class LocalFileInferenceActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // The Settings page may have changed the threshold or thread count meanwhile.
+        // The Settings page may have changed the threshold, thread count, or models meanwhile.
         Settings.Inference.applyPreferences(sharedPreferences)
+        showModelSelection()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -150,8 +139,15 @@ class LocalFileInferenceActivity : AppCompatActivity() {
         }
         if (running) return
         val vp = processor ?: return
-        running = true
+        val models = ModelSelection.fromSettings()
         lastUri = uri
+        if (models.isEmpty) {
+            binding.runAgainButton.isEnabled = true
+            binding.detailText.visibility = View.GONE
+            showStatus(getString(R.string.local_status_no_model))
+            return
+        }
+        running = true
         binding.openImageButton.isEnabled = false
         binding.runAgainButton.isEnabled = false
         showStatus(getString(R.string.local_status_running))
@@ -169,11 +165,7 @@ class LocalFileInferenceActivity : AppCompatActivity() {
                     // processFrame recycles the bitmap, so note its size first.
                     val width = decoded.bitmap.width
                     val height = decoded.bitmap.height
-                    val pipeline = when (model) {
-                        LocalInferenceModel.TRANSMITTER -> FramePipeline.TRANSMITTER
-                        LocalInferenceModel.ORIENTATION -> FramePipeline.ORIENTATION
-                    }
-                    vp.processFrame(decoded.bitmap, annotateFrame = true, pipeline = pipeline) { result ->
+                    vp.processFrame(decoded.bitmap, annotateFrame = true, models = models) { result ->
                         val unavailable = result?.orientationUnavailable
                         when {
                             result == null -> showFailure(getString(R.string.local_unsupported_image))
@@ -189,6 +181,25 @@ class LocalFileInferenceActivity : AppCompatActivity() {
         }
     }
 
+    /** Sets the two checkboxes from the stored selection without firing their listeners. */
+    private fun showModelSelection() {
+        val checks = listOf(
+            binding.transmitterCheck to Settings.Inference.KEY_MODEL_TRANSMITTER,
+            binding.orientationCheck to Settings.Inference.KEY_MODEL_ORIENTATION
+        )
+        val selection = ModelSelection.fromSettings()
+        for ((check, key) in checks) {
+            check.setOnCheckedChangeListener(null)
+            check.isChecked = if (key == Settings.Inference.KEY_MODEL_TRANSMITTER) selection.transmitter else selection.orientation
+            check.setOnCheckedChangeListener { _, checked ->
+                sharedPreferences.edit().putBoolean(key, checked).apply()
+                Settings.Inference.applyPreferences(sharedPreferences)
+                // Show the current image with the new choice straight away.
+                lastUri?.let(::openImage)
+            }
+        }
+    }
+
     private fun showResult(result: FrameResult, name: String, width: Int, height: Int) {
         running = false
         binding.openImageButton.isEnabled = true
@@ -199,50 +210,55 @@ class LocalFileInferenceActivity : AppCompatActivity() {
         binding.resultImage.setImageBitmap(result.frame)
         previous?.recycle()
 
+        // One status line: what each selected model found, then the total time.
         val threshold = (Settings.Inference.confidenceThreshold * 100f + 0.5f).toInt()
-        if (model == LocalInferenceModel.ORIENTATION) {
-            // Orientation Detection Model: it runs only after a transmitter was found, and
-            // only a result inside the transmitter's box counts.
-            val orientation = result.orientations.firstOrNull()
-            val millis = result.inferenceMillis + result.orientationMillis
-            if (!result.orientationRan) {
-                showStatus(getString(R.string.local_status_orientation_skipped, name, width, height, threshold, millis))
-                binding.detailText.visibility = View.GONE
-            } else if (orientation == null) {
-                showStatus(getString(R.string.local_status_orientation_none, name, width, height, threshold, millis))
-                binding.detailText.visibility = View.GONE
+        val models = result.models
+        val detection = result.detections.firstOrNull()
+        val orientation = result.orientations.firstOrNull()
+        val parts = ArrayList<String>()
+        val details = ArrayList<String>()
+        if (models.transmitter) {
+            if (detection == null) {
+                parts += getString(R.string.local_part_transmitter_none, threshold)
             } else {
-                val direction = OrientationHelper.classNameForId(orientation.classId)
-                showStatus(getString(R.string.local_status_orientation_found, name, width, height, direction, millis))
-                binding.detailText.visibility = View.VISIBLE
-                binding.detailText.text = getString(
-                    R.string.local_status_triangle,
-                    direction, (orientation.confidence * 100f + 0.5f).toInt(),
-                    orientation.ax.toInt(), orientation.ay.toInt(),
-                    orientation.bx.toInt(), orientation.by.toInt(),
-                    orientation.cx.toInt(), orientation.cy.toInt()
+                parts += getString(R.string.local_part_transmitter_found, result.detections.size)
+                details += getString(
+                    R.string.local_status_box,
+                    (detection.confidence * 100f + 0.5f).toInt(),
+                    detection.left.toInt(), detection.top.toInt(), detection.right.toInt(), detection.bottom.toInt()
                 )
             }
-            return
         }
-        val detection = result.detections.firstOrNull()
-        showStatus(
-            if (detection == null) {
-                getString(R.string.local_status_none, name, width, height, threshold, result.inferenceMillis)
-            } else {
-                getString(R.string.local_status_found, name, width, height, result.detections.size, result.inferenceMillis)
+        if (models.orientation) {
+            when {
+                // With both models selected, orientation waits for a transmitter box.
+                !result.orientationRan -> parts += getString(R.string.local_part_orientation_skipped)
+                orientation == null -> parts += getString(
+                    if (models.orientationNeedsTransmitter) R.string.local_part_orientation_none_in_box
+                    else R.string.local_part_orientation_none,
+                    threshold
+                )
+                else -> {
+                    val direction = OrientationHelper.classNameForId(orientation.classId)
+                    parts += getString(R.string.local_part_orientation_found, direction)
+                    details += getString(
+                        R.string.local_status_triangle,
+                        direction, (orientation.confidence * 100f + 0.5f).toInt(),
+                        orientation.ax.toInt(), orientation.ay.toInt(),
+                        orientation.bx.toInt(), orientation.by.toInt(),
+                        orientation.cx.toInt(), orientation.cy.toInt()
+                    )
+                }
             }
-        )
-        if (detection == null) {
-            binding.detailText.visibility = View.GONE
-        } else {
-            binding.detailText.visibility = View.VISIBLE
-            binding.detailText.text = getString(
-                R.string.local_status_box,
-                (detection.confidence * 100f + 0.5f).toInt(),
-                detection.left.toInt(), detection.top.toInt(), detection.right.toInt(), detection.bottom.toInt()
-            )
         }
+        showStatus(
+            getString(
+                R.string.local_status_summary, name, width, height, parts.joinToString(" · "),
+                result.inferenceMillis + result.orientationMillis
+            )
+        )
+        binding.detailText.visibility = if (details.isEmpty()) View.GONE else View.VISIBLE
+        binding.detailText.text = details.joinToString("\n")
     }
 
     private fun showFailure(message: String) {

@@ -45,12 +45,12 @@ Every headset function has a phone counterpart. Controller buttons become on-scr
 | **A**: toggle transmitter recognition | **Start Inference / Stop Inference** button; "Inference Mode: Off" shows for three seconds |
 | Hold **B**: record training video (MP4 with microphone in `Movies/HoloCube`) | **Record / Stop** button, red "Recording" badge, saved filename shown for six seconds |
 | **X**: About HoloCube | **About** page with the same project details and tappable links |
-| **Y**: Settings (confidence threshold) | **Settings** page with a confidence slider and PyTorch CPU threads |
+| **Y**: Settings (confidence threshold) | **Settings** page with a confidence slider, PyTorch CPU threads, and **Models to Run** checkboxes |
 | **Menu**: Controller Guide | **Guide** dialog |
 | Startup reference check of the trained checkpoint | Same check; the status line reports model loading and errors |
 | — | Zoom, front/back switch, and **C** to clear, as in LiFind |
 | HoloCube Transmitter (separate phone app) | **Transmitter** button: the optical pattern full screen, landscape, maximum brightness, screen kept awake; tap it for About Us |
-| — | **Settings → Model Testing → In-Device Local File Inference**: open a test image stored on the phone (or share an image to HoloCube) and run the Transmitter Detection Model or the Orientation Detection Model on it; the box or triangle, its confidence, and the inference time are shown. |
+| — | **Settings → Model Testing → In-Device Local File Inference**: open a test image stored on the phone (or share an image to HoloCube) and run the ticked models on it (the same two **Models to run** checkboxes as Settings); each model's box or triangle, its confidence, and the total inference time are shown. |
 
 Since version 1.1 the recognition target is the transmitter's **central pyramid** (the
 black inverted hologram prism inside the cube frame) as labelled in the supplied
@@ -65,8 +65,14 @@ direction's cube with a **triangle**. The transmitter comes first: the orientati
 runs only on frames where the transmitter model detected a transmitter, and its result is
 shown only when it lies inside the transmitter's box (since 1.3.1). The camera screen then
 adds the triangle, a chip such as `North  93%` under its tip, and the direction to the
-status line; **Settings → Orientation Detection** switches it off. It uses a 640 × 640
-input, so frames with a transmitter take several times longer with it on. If its
+status line. It uses a 640 × 640 input, so frames with a transmitter take several times
+longer with it on.
+
+Since 1.4 **Settings → Models to Run** has a checkbox for each model, and the Local File
+Inference screen shows the same two checkboxes. With both ticked the transmitter comes
+first as described above. With only the Transmitter ticked the app behaves as before 1.3.
+With only the Orientation ticked that model runs by itself on every frame, with no
+transmitter box to wait for. With neither ticked nothing runs and the status line says so. If its
 checkpoint cannot be loaded, the transmitter keeps working and the log says why. Each
 model has its own helper (`TransmitterHelper`, `OrientationHelper`) with its checkpoint,
 class list, and reference fixture; another model is added the same way.
@@ -254,14 +260,15 @@ around the central pyramid only.
 
 ![9](Screenshots/9.png)
 
-**10** and **11** Version 1.2: the **In-Device Local File Inference** screen after opening
-`reference_angled_frame_03905.jpg` from `Pictures/HoloCube Test Dataset` (one box,
-**Transmitter 91%**, 131 ms, with the box in image pixels), and the Settings page with
-its **Model Testing** entry.
+**10** and **11** Version 1.4, captured on November 15, 2026. **10**: the **In-Device
+Local File Inference** screen with both models ticked after opening `North_bright_640.jpg`
+from `Pictures/HoloCube Test Dataset`: the transmitter box (**Transmitter 67%**) with the
+orientation triangle inside it (**North 92%**), and both results in image pixels, 841 ms
+in total. **11**: the Settings page with the **Models to Run** checkboxes.
 
 | | |
 | --- | --- |
-| **10** Local file inference ![10](Screenshots/10.png) | **11** Settings with Model Testing ![11](Screenshots/11.png) |
+| **10** Local file inference, both models ![10](Screenshots/10.png) | **11** Settings: Models to Run ![11](Screenshots/11.png) |
 
 The live-inference screenshot shows the status line (**0 transmitters · 149 ms**)
 while the camera looked at the ceiling; no box is drawn without a transmitter in view.

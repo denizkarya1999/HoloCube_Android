@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The checkbox of a Models to Run row; the row itself handles the tap -->
+<CheckBox xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/checkbox"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@null"
+    android:buttonTint="@color/darkBlue"
+    android:clickable="false"
+    android:focusable="false" />

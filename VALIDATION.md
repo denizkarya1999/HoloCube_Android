@@ -1,5 +1,53 @@
 # HoloCube Android validation
 
+## 1.4: Models to Run checkboxes — November 15, 2026
+
+- HoloCube Android **1.4 (code 8)**: a checkbox for each model in **Settings → Models to
+  Run**, and the same two checkboxes on the Local File Inference screen in place of the
+  model list (`ModelSelection`, replacing `FramePipeline`). Both ticked: transmitter
+  first, orientation inside its box. One ticked: that model alone (orientation then runs
+  on the whole frame without waiting for a transmitter). Neither: nothing runs.
+
+### Passed on the development computer
+
+- `./gradlew :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest
+  :app:lintDebug :app:assembleRelease` with JDK 21: BUILD SUCCESSFUL; 26 unit tests passed
+  (4 new for the selection); lint 0 errors, 12 warnings (one more `Overdraw` from the new
+  maize checkbox row, like the other Settings rows); `aapt` confirms 1.4 / code 8. Release
+  APK 104,560,736 bytes, SHA-256
+  `64fc9b7e1c1997e7f2df29b5815c986c402cebe42e0a663a42a0fc65314be91b`.
+
+### Passed on the connected Pixel 8a
+
+- Installed over 1.3.2 with `adb install -r`; the installed APK's checksum matches.
+- Local File Inference, `North_bright_640.jpg`, both ticked: `1 transmitter · orientation
+  North · 841 ms`, `Transmitter 67% · box left 966, top 535, right 1288, bottom 763 px`
+  and `North 92% · triangle (955, 571) (1072, 571) (1017, 697) px` (screenshot 10).
+- The next three checks were made on the build just before the final one, which differs
+  only in the wording of the orientation model's description:
+  - Transmitter unticked (orientation alone): the same image gives `orientation North ·
+    726 ms`; `Northwest_bright_665.jpg`, which the transmitter model misses, gives
+    `orientation Northwest · 460 ms`, `Northwest 92% · triangle (703, 403) (808, 403)
+    (756, 520) px`.
+  - Both unticked: `Tick at least one model to run`. Both ticked again on the Northwest
+    frame: `no transmitter above 34% · orientation not run · 93 ms`.
+  - Settings shows the **Models to Run** category with both checkboxes ticked
+    (screenshot 11).
+- The release APK replaced `Apps/Install HoloCube.apk` on the phone and the copy in
+  `~/Downloads` on the workstation (checksums verified). Not uploaded to Drive.
+- Screenshots 10 and 11 in `Screenshots/` replace the 1.2 ones.
+
+### Not verified
+
+- The live camera screen with the checkboxes (only Local File Inference and the Settings
+  page were exercised), and the "no model ticked" status line on the camera screen.
+- An orientation-only screenshot was not captured: the phone locked during the retake.
+  Because of that, the Transmitter checkbox may have been left unticked on the phone; it
+  could not be read back while the phone was locked.
+- No device test covers the new selection; the existing device tests were not rerun.
+
+---
+
 ## 1.3.2: maize model list — November 15, 2026
 
 - HoloCube Android **1.3.2 (code 7)**: the open model list on the Local File Inference

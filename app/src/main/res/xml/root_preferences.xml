@@ -27,14 +27,28 @@
             android:entryValues="@array/cpu_thread_values"
             android:defaultValue="4" />
 
-        <ListPreference
-            android:key="orientation_detection"
-            android:layout="@layout/preference_list_layout"
-            android:title="Orientation Detection"
-            android:summary="%s · runs the Orientation Detection Model whenever a transmitter is detected (640 × 640 input, slower)"
-            android:entries="@array/orientation_options"
-            android:entryValues="@array/orientation_values"
-            android:defaultValue="on" />
+    </PreferenceCategory>
+
+    <!-- Which models run on camera frames and on Local File Inference images -->
+    <PreferenceCategory
+        android:title="Models to Run"
+        android:layout="@layout/preference_category_layout">
+
+        <CheckBoxPreference
+            android:key="model_transmitter"
+            android:layout="@layout/preference_checkbox_layout"
+            android:widgetLayout="@layout/preference_widget_checkbox_blue"
+            android:title="Transmitter Detection Model"
+            android:summary="Finds the transmitter (the central pyramid) and draws its box."
+            android:defaultValue="true" />
+
+        <CheckBoxPreference
+            android:key="model_orientation"
+            android:layout="@layout/preference_checkbox_layout"
+            android:widgetLayout="@layout/preference_widget_checkbox_blue"
+            android:title="Orientation Detection Model"
+            android:summary="Names the direction the pyramid is seen from and draws a triangle. With both ticked it runs after a transmitter is found, inside its box; ticked alone it runs on every frame. Slower: 640 × 640 input."
+            android:defaultValue="true" />
     </PreferenceCategory>
 
     <!-- Model testing without the camera: run a model on an image stored on this phone -->
@@ -46,7 +60,7 @@
             android:key="local_file_inference"
             android:layout="@layout/preference_list_layout"
             android:title="In-Device Local File Inference"
-            android:summary="Open a test image from this phone and run the Transmitter Detection Model or the Orientation Detection Model on it." />
+            android:summary="Open a test image from this phone and run the ticked models on it." />
     </PreferenceCategory>
 
 </PreferenceScreen>
