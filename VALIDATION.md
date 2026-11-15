@@ -1,5 +1,22 @@
 # HoloCube Android validation
 
+## 1.4.2: Guide text covers both models — November 15, 2026
+
+- HoloCube Android **1.4.2 (code 10)**: the Guide dialog's text now describes the
+  Orientation Detection Model, the transmitter-first rule, the **Models to Run**
+  checkboxes, and both checkpoints. Only the string changed.
+- Workstation: `./gradlew :app:testDebugUnitTest :app:assembleDebug
+  :app:assembleDebugAndroidTest :app:lintDebug :app:assembleRelease`: BUILD SUCCESSFUL;
+  26 unit tests passed; lint 0 errors, 12 warnings; `aapt` confirms 1.4.2 / code 10.
+  Release APK 104,563,009 bytes, SHA-256
+  `9f6d394d1116cd94cfdb68714368a721b14d94e945df0fa9d06406b56ff6be60`.
+- Pixel 8a: installed over 1.4.1 with `adb install -r`. A screenshot of the Guide shows
+  the new text with the maize OK (screenshot 6 retaken); the text is longer than the
+  dialog and scrolls. The same APK replaced `Apps/Install HoloCube.apk` on the phone and
+  the copy in `~/Downloads` on the workstation (checksums verified). Not uploaded to Drive.
+
+---
+
 ## 1.4.1: visible ticks and a maize Guide OK — November 15, 2026
 
 - HoloCube Android **1.4.1 (code 9)**: the model checkboxes (Settings → Models to Run and
