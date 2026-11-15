@@ -29,6 +29,7 @@ import com.developer27.holocube.mobile.camera.CameraHelper
 import com.developer27.holocube.mobile.camera.VideoRecorder
 import com.developer27.holocube.mobile.databinding.ActivityMainBinding
 import com.developer27.holocube.mobile.transmitter.TransmitterActivity
+import com.developer27.holocube.mobile.videoprocessing.OrientationHelper
 import com.developer27.holocube.mobile.videoprocessing.Settings
 import com.developer27.holocube.mobile.videoprocessing.VideoProcessor
 import kotlin.math.max
@@ -57,7 +58,7 @@ class MainActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private val restoreStatus = Runnable { viewBinding.statusText.text = statusMessage }
     private val preferenceListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-        if (key in setOf(KEY_CONFIDENCE, KEY_CPU_THREADS)) applyDetectionSettings()
+        if (key in setOf(KEY_CONFIDENCE, KEY_CPU_THREADS, KEY_ORIENTATION)) applyDetectionSettings()
     }
 
     private val CAMERA_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
@@ -71,6 +72,7 @@ class MainActivity : AppCompatActivity() {
     companion object {
         const val KEY_CONFIDENCE = Settings.Inference.KEY_CONFIDENCE
         const val KEY_CPU_THREADS = Settings.Inference.KEY_CPU_THREADS
+        const val KEY_ORIENTATION = Settings.Inference.KEY_ORIENTATION
 
         /** "Inference Mode: Off" stays visible this long, as on the headset. */
         private const val INFERENCE_OFF_NOTICE_MS = 3000L
@@ -239,7 +241,21 @@ class MainActivity : AppCompatActivity() {
             if (result == null) return@processFrame
             if (isInferring) {
                 viewBinding.processedFrameView.setImageBitmap(result.frame)
-                showStatus(getString(R.string.status_detections, result.detections.size, result.inferenceMillis))
+                val orientation = result.orientations.firstOrNull()
+                val millis = result.inferenceMillis + result.orientationMillis
+                showStatus(
+                    when {
+                        !result.orientationRan ->
+                            getString(R.string.status_detections, result.detections.size, result.inferenceMillis)
+                        orientation == null ->
+                            getString(R.string.status_detections_no_orientation, result.detections.size, millis)
+                        else -> getString(
+                            R.string.status_detections_orientation, result.detections.size,
+                            OrientationHelper.classNameForId(orientation.classId),
+                            (orientation.confidence * 100f + 0.5f).toInt(), millis
+                        )
+                    }
+                )
             } else {
                 result.frame.recycle()
             }

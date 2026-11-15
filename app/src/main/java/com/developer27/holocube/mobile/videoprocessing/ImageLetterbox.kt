@@ -34,4 +34,10 @@ class ImageLetterbox(
         ((x2 - paddingLeft) / scale).coerceIn(0f, imageWidth.toFloat()),
         ((y2 - paddingTop) / scale).coerceIn(0f, imageHeight.toFloat())
     )
+
+    /** Maps one model-input point back to original image pixels, clamped to the image. */
+    fun toOriginalPoint(x: Float, y: Float): FloatArray = floatArrayOf(
+        ((x - paddingLeft) / scale).coerceIn(0f, imageWidth.toFloat()),
+        ((y - paddingTop) / scale).coerceIn(0f, imageHeight.toFloat())
+    )
 }

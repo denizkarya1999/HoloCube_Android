@@ -1,5 +1,44 @@
 # HoloCube Android validation
 
+## 1.3: Orientation Detection Model — November 15, 2026
+
+- HoloCube Android **1.3 (code 5)** adds the eight-class **Orientation Detection Model**
+  (`holocube_orientation.pt`, deployed SHA-256 `71326fcb…`, re-saved from the supplied
+  `best.pt` `d92db885…`): `OrientationHelper`, a second 640 × 640 pass in `VideoProcessor`
+  with the triangle and its chip, `PyTorchWorker.detectOrientation`, the
+  **Settings → Orientation Detection** switch, the Local File Inference model entry, and
+  the extended Python loader. The transmitter checkpoint and its code path are unchanged.
+
+### Passed on the development computer
+
+- Under Python 3.8.20 / PyTorch 1.8.1 / NumPy 1.19.5 (the app's runtime versions, x86-64
+  desktop), the loader reproduces Ultralytics 8.4.56 on three test-split frames (bright
+  North, dimmed East, dark Northwest): same class, confidence and box identical to the
+  printed precision, triangle corners identical. The phone edition's
+  `initialize_orientation` and `detect_orientation_rgba` (top-row-first RGBA) pass the
+  same check, and the transmitter's three reference frames still match after the loader
+  refactor.
+- `./gradlew :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest
+  :app:lintDebug` with JDK 21: BUILD SUCCESSFUL; 21 unit tests passed (6 new orientation
+  tests); lint 0 errors, 11 warnings (the same layout warnings as 1.2.1); `aapt` confirms
+  1.3 / code 5.
+- The debug APK's `assets/chaquopy/app.imy` holds `holocube_transmitter.pt`
+  (`1b65b56b…`), `holocube_orientation.pt` (`71326fcb…`), and both startup references.
+
+### Not verified
+
+- **Not run on a phone.** No device was connected: the orientation model's startup check
+  on ARM, its inference time, the triangle drawn over the live preview, the Settings
+  switch, and the Local File Inference result for the new model are all untested on
+  hardware. No device test was added for the new model, and the existing device tests
+  were not rerun; they now also run the orientation pass on each frame.
+- The model's accuracy is only known from its own training record (validation mask
+  mAP50 0.986 on same-room frames). Its labels are first-pass semi-automatic labels,
+  weakest for the diagonal directions and in bright light.
+- No release APK was built or deployed for 1.3.
+
+---
+
 ## 1.2.1: Local File Inference opens in front — November 7, 2026
 
 - HoloCube Android **1.2.1 (code 4)**: `LocalFileInferenceActivity` gets

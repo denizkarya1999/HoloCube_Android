@@ -18,7 +18,7 @@ structure and weights directly.
 | Embedded Python | 3.8 |
 | Embedded PyTorch | 1.8.1, CPU (`torch-1.8.1-3-cp38-cp38-android_21_arm64_v8a`) |
 | Embedded NumPy | 1.19.5 |
-| Model | Trained single-class YOLO26n transmitter `.pt` checkpoint |
+| Models | Trained single-class YOLO26n transmitter `.pt` checkpoint; trained eight-class YOLO26n-seg orientation `.pt` checkpoint |
 | Android | ARM64; minimum API 26 (Android 8.0), target API 34 |
 
 Python 3.8 is the newest version with a prebuilt Android PyTorch wheel on Chaquopy's
@@ -72,6 +72,41 @@ Input is `[1,3,320,320]` float32; output is `[1,300,6]`. The startup check in
 runs the bundled bright transmitter frame, and must reproduce the recorded box within
 0.001 confidence and 1 original-image pixel before camera frames are accepted.
 
+## Orientation Detection Model
+
+`holocube_orientation.pt` is a YOLO26n-seg model with eight classes (North clockwise to
+Northwest) trained at 640 × 640 on triangle labels. The supplied file was the training
+notebook's `best.pt` (new zip format, half precision), which PyTorch 1.8.1 cannot read, so
+`Tools/make-orientation-deployment.py` in the Quest repository re-saved it once in the
+format the transmitter notebook already produces: model only, unfused, CPU float32, legacy
+serialization. The weights are otherwise unchanged; both hashes are in
+`app/src/main/assets/orientation_provenance.json`.
+
+- `checkpoint_runtime.py` (identical to the headset's) adds inference-only `Segment26`,
+  `Proto26`, and `SegmentationModel`, a loader that accepts only this checkpoint, and
+  `orientation_rows`, which reduces the mask (as Ultralytics' `process_mask` defines it)
+  to the triangle the labels were drawn as: the pixel farthest toward the upper left, the
+  pixel farthest toward the upper right, and the centre of the lowest two rows.
+- `holocube_runtime.initialize_orientation` runs after the transmitter's startup check. It
+  runs the bundled bright reference frame (`orientation_reference.u8`, raw RGB) and must
+  reproduce the recorded class, confidence within 0.001, box within 1 original-image
+  pixel, and triangle within 2 model pixels. A failure here is logged as
+  `HOLOCUBE_ORIENTATION_UNAVAILABLE` and leaves the transmitter usable.
+- `VideoProcessor` letterboxes the same frame a second time into 640 × 640 and calls
+  `PyTorchWorker.detectOrientation`. The result is `[5,12]`: the five strongest rows of
+  `[x1,y1,x2,y2,confidence,class_id,ax,ay,bx,by,cx,cy]`. `OrientationHelper.parseRows`
+  maps box and corners back to frame pixels and keeps the strongest valid row.
+- The orientation pass does not wait for a transmitter box. The two models were trained
+  on different recordings (headset and phone), and one can find the pyramid when the
+  other does not.
+- `FramePipeline` selects what runs: `CAMERA` (transmitter, then orientation when
+  **Settings → Orientation Detection** is on), `TRANSMITTER`, or `ORIENTATION` (the two
+  Local File Inference choices).
+
+On some frames the end-to-end head returns two or three near-identical rows that share
+the confidence, so a visible pyramid can score below the threshold; only the strongest row
+is used.
+
 ## Local file inference
 
 `LocalFileInferenceActivity` (Settings → Model Testing → In-Device Local File Inference,
@@ -79,10 +114,11 @@ also the target of `ACTION_VIEW` and `ACTION_SEND` for `image/*`) decodes the ch
 image to a software ARGB_8888 bitmap with its long edge limited to 1920 px
 (`ImageDecoder` on Android 9+, which also applies EXIF orientation; `BitmapFactory`
 below), then calls `VideoProcessor.processFrame(bitmap, annotateFrame = true)`, so the
-result is exactly what the camera screen would draw for that frame. The screen reads the
-Settings values on resume. `LocalInferenceModel` lists the selectable models; a new model
-needs its own helper (checkpoint, class list, reference fixture) and a branch in the
-screen's `when (model)`.
+box or triangle is drawn exactly as the camera screen would draw it for that frame. The
+screen reads the Settings values on resume. `LocalInferenceModel` lists the selectable
+models (Transmitter and Orientation, each run on its own here); a new model needs its own
+helper (checkpoint, class list, reference fixture) and a branch in the screen's
+`when (model)`.
 
 ## Transmitter screen
 
@@ -116,13 +152,18 @@ together; the parity checks will refuse a mismatched set.
 
 ## Validation
 
-- `./gradlew :app:testDebugUnitTest`: letterbox geometry and single-box row parsing.
+- `./gradlew :app:testDebugUnitTest`: letterbox geometry, single-box row parsing,
+  orientation row parsing, and that the packaged orientation checkpoint has the hash the
+  Kotlin and Python code expect.
 - `./gradlew :app:connectedDebugAndroidTest` with a phone attached: letterbox pixel
   layout, the single class name, on-device parity of the angled and low-light
   validation frames against the Ultralytics boxes through the app's RGBA path, a real
   checkpoint load plus two inferences, and camera switching/pause/resume survival.
 - Device log markers while the app runs: `HOLOCUBE_PT_DEVICE_PARITY_PASSED`,
   `HOLOCUBE_PT_READY`, `HOLOCUBE_PT_CAMERA_FRAME`, `HOLOCUBE_TRANSMITTER_SINGLE_BOX`,
+  `HOLOCUBE_ORIENTATION_DEVICE_PARITY_PASSED`, `HOLOCUBE_ORIENTATION_READY` (or
+  `HOLOCUBE_ORIENTATION_UNAVAILABLE`), `HOLOCUBE_ORIENTATION_CAMERA_FRAME`,
+  `HOLOCUBE_ORIENTATION_SINGLE_TRIANGLE`,
   `HOLOCUBE_VIDEO_STARTED`, `HOLOCUBE_VIDEO_SAVING`, `HOLOCUBE_VIDEO_SAVED`.
 
 See [recorded validation](../VALIDATION.md) for the checks actually performed.

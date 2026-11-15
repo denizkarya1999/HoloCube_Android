@@ -20,8 +20,10 @@ import androidx.core.content.IntentCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.developer27.holocube.mobile.databinding.ActivityLocalFileInferenceBinding
+import com.developer27.holocube.mobile.videoprocessing.FramePipeline
 import com.developer27.holocube.mobile.videoprocessing.FrameResult
 import com.developer27.holocube.mobile.videoprocessing.LocalInferenceModel
+import com.developer27.holocube.mobile.videoprocessing.OrientationHelper
 import com.developer27.holocube.mobile.videoprocessing.Settings
 import com.developer27.holocube.mobile.videoprocessing.VideoProcessor
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +40,7 @@ import kotlin.math.max
  *
  * The same [VideoProcessor] path as the live camera is used, so the result is exactly
  * what the camera screen would draw for that frame. [LocalInferenceModel] lists the
- * models; only the Transmitter Detection Model exists today.
+ * models: the Transmitter Detection Model and the Orientation Detection Model.
  */
 class LocalFileInferenceActivity : AppCompatActivity() {
 
@@ -167,12 +169,20 @@ class LocalFileInferenceActivity : AppCompatActivity() {
                     // processFrame recycles the bitmap, so note its size first.
                     val width = decoded.bitmap.width
                     val height = decoded.bitmap.height
-                    when (model) {
-                        LocalInferenceModel.TRANSMITTER ->
-                            vp.processFrame(decoded.bitmap, annotateFrame = true) { result ->
-                                if (result == null) showFailure(getString(R.string.local_unsupported_image))
-                                else showResult(result, decoded.name, width, height)
+                    val pipeline = when (model) {
+                        LocalInferenceModel.TRANSMITTER -> FramePipeline.TRANSMITTER
+                        LocalInferenceModel.ORIENTATION -> FramePipeline.ORIENTATION
+                    }
+                    vp.processFrame(decoded.bitmap, annotateFrame = true, pipeline = pipeline) { result ->
+                        val unavailable = result?.orientationUnavailable
+                        when {
+                            result == null -> showFailure(getString(R.string.local_unsupported_image))
+                            unavailable != null -> {
+                                result.frame.recycle()
+                                showFailure(getString(R.string.local_orientation_unavailable, unavailable))
                             }
+                            else -> showResult(result, decoded.name, width, height)
+                        }
                     }
                 }
             }
@@ -190,6 +200,26 @@ class LocalFileInferenceActivity : AppCompatActivity() {
         previous?.recycle()
 
         val threshold = (Settings.Inference.confidenceThreshold * 100f + 0.5f).toInt()
+        if (result.orientationRan) {
+            // Orientation Detection Model: the direction, then the triangle's corners.
+            val orientation = result.orientations.firstOrNull()
+            if (orientation == null) {
+                showStatus(getString(R.string.local_status_orientation_none, name, width, height, threshold, result.orientationMillis))
+                binding.detailText.visibility = View.GONE
+            } else {
+                val direction = OrientationHelper.classNameForId(orientation.classId)
+                showStatus(getString(R.string.local_status_orientation_found, name, width, height, direction, result.orientationMillis))
+                binding.detailText.visibility = View.VISIBLE
+                binding.detailText.text = getString(
+                    R.string.local_status_triangle,
+                    direction, (orientation.confidence * 100f + 0.5f).toInt(),
+                    orientation.ax.toInt(), orientation.ay.toInt(),
+                    orientation.bx.toInt(), orientation.by.toInt(),
+                    orientation.cx.toInt(), orientation.cy.toInt()
+                )
+            }
+            return
+        }
         val detection = result.detections.firstOrNull()
         showStatus(
             if (detection == null) {

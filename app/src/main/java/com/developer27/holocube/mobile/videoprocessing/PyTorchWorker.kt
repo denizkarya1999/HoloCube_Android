@@ -16,6 +16,8 @@ import java.util.concurrent.Future
  * Owns one background thread that runs the embedded Python/PyTorch runtime.
  * Kotlin port of the Quest app's PyTorchWorker.java: start Python once, load the
  * trained transmitter checkpoint, run the startup reference check, then serve one image at a time.
+ * The Orientation Detection Model is loaded afterwards on the same thread; if it cannot be
+ * loaded the transmitter keeps working and [orientationError] says why.
  */
 class PyTorchWorker(context: Context, threads: Int) : Closeable {
     companion object {
@@ -28,6 +30,15 @@ class PyTorchWorker(context: Context, threads: Int) : Closeable {
     }
     private val startup: Future<PyObject>
     @Volatile private var reportedFrame = false
+    @Volatile private var reportedOrientationFrame = false
+
+    /** True once the orientation checkpoint is loaded and its reference check passed. */
+    @Volatile var isOrientationReady = false
+        private set
+
+    /** Why the orientation model is unavailable, or null while loading or when it is ready. */
+    @Volatile var orientationError: String? = null
+        private set
     @Volatile var isClosed = false
         private set
 
@@ -40,6 +51,16 @@ class PyTorchWorker(context: Context, threads: Int) : Closeable {
             val runtime = Python.getInstance().getModule(MODULE)
             Log.i(TAG, runtime.callAttr("initialize", threads).toString())
             Log.i(TAG, "HOLOCUBE_PT_READY: Transmitter Recognition Model loaded on device; class 0: Transmitter")
+            try {
+                Log.i(TAG, runtime.callAttr("initialize_orientation").toString())
+                isOrientationReady = true
+                Log.i(TAG, "HOLOCUBE_ORIENTATION_READY: Orientation Detection Model loaded on device; " +
+                    "classes " + OrientationHelper.CLASS_NAMES.joinToString())
+            } catch (error: Exception) {
+                // The transmitter passed its own check and stays usable without this model.
+                orientationError = error.message ?: error.toString()
+                Log.e(TAG, "HOLOCUBE_ORIENTATION_UNAVAILABLE: " + orientationError, error)
+            }
             runtime
         })
     }
@@ -70,6 +91,26 @@ class PyTorchWorker(context: Context, threads: Int) : Closeable {
                 Log.i(TAG, "HOLOCUBE_PT_CAMERA_FRAME: " + rows.size / 6 +
                     " detection rows in " + (System.nanoTime() - start) / 1_000_000 + " ms")
                 reportedFrame = true
+            }
+            rows
+        })
+        return get(task)
+    }
+
+    /**
+     * Runs the orientation checkpoint on one 640 × 640 letterboxed RGBA image and returns
+     * [OrientationHelper.OUTPUT_ROWS] rows of [OrientationHelper.OUTPUT_COLUMNS] values,
+     * flattened: box, confidence, class, then the triangle's three corners.
+     */
+    fun detectOrientation(rgba: ByteArray): FloatArray {
+        check(!isClosed) { "PyTorch worker is closed" }
+        val task = executor.submit(Callable {
+            val start = System.nanoTime()
+            val rows = awaitReady().callAttr("detect_orientation_rgba", rgba).toJava(FloatArray::class.java)
+            if (!reportedOrientationFrame) {
+                Log.i(TAG, "HOLOCUBE_ORIENTATION_CAMERA_FRAME: " + rows.size / OrientationHelper.OUTPUT_COLUMNS +
+                    " orientation rows in " + (System.nanoTime() - start) / 1_000_000 + " ms")
+                reportedOrientationFrame = true
             }
             rows
         })

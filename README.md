@@ -50,7 +50,7 @@ Every headset function has a phone counterpart. Controller buttons become on-scr
 | Startup reference check of the trained checkpoint | Same check; the status line reports model loading and errors |
 | — | Zoom, front/back switch, and **C** to clear, as in LiFind |
 | HoloCube Transmitter (separate phone app) | **Transmitter** button: the optical pattern full screen, landscape, maximum brightness, screen kept awake; tap it for About Us |
-| — | **Settings → Model Testing → In-Device Local File Inference**: open a test image stored on the phone (or share an image to HoloCube) and run the Transmitter Detection Model on it; the box, its confidence, and the inference time are shown. Other models will be listed there as they are added. |
+| — | **Settings → Model Testing → In-Device Local File Inference**: open a test image stored on the phone (or share an image to HoloCube) and run the Transmitter Detection Model or the Orientation Detection Model on it; the box or triangle, its confidence, and the inference time are shown. |
 
 Since version 1.1 the recognition target is the transmitter's **central pyramid** (the
 black inverted hologram prism inside the cube frame) as labelled in the supplied
@@ -58,9 +58,16 @@ dataset; the frame, bracket, and rail lie outside the box. Version 1.0 boxed the
 assembly. The app does not decode optical data or identify individual transmitters;
 the paper's optical data transmission and control channel remain future work, as in
 the headset app.
-Further models are planned for this app: `TransmitterHelper` owns the current one,
-and its parser already accepts any class count and box limit, so another model is
-added as a sibling helper with its own checkpoint, class list, and reference fixture.
+Version 1.3 adds a second model, the **Orientation Detection Model** (YOLO26n-seg, eight
+classes: North, Northeast, East, Southeast, South, Southwest, West, Northwest). It names
+the compass direction the pyramid is seen from and outlines the pyramid face showing that
+direction's cube with a **triangle**. On the camera screen it runs on every frame after
+the transmitter model and adds the triangle, a chip such as `North  93%` under its tip,
+and the direction to the status line; **Settings → Orientation Detection** switches it
+off. It uses a 640 × 640 input, so frames take several times longer with it on. If its
+checkpoint cannot be loaded, the transmitter keeps working and the log says why. Each
+model has its own helper (`TransmitterHelper`, `OrientationHelper`) with its checkpoint,
+class list, and reference fixture; another model is added the same way.
 
 ## Research inspiration
 
@@ -206,9 +213,9 @@ needed. The debug APK is about 100 MB because it carries the Python and PyTorch 
 ## Verify
 
 ```sh
-./gradlew :app:testDebugUnitTest                      # letterbox and single-box parser tests
+./gradlew :app:testDebugUnitTest                      # letterbox, single-box parser, and orientation row tests
 ANDROID_SERIAL=PHONE_SERIAL ./gradlew :app:connectedDebugAndroidTest
-adb -s PHONE_SERIAL logcat -s HoloCube                # HOLOCUBE_PT_*, HOLOCUBE_TRANSMITTER_*, HOLOCUBE_VIDEO_* markers
+adb -s PHONE_SERIAL logcat -s HoloCube                # HOLOCUBE_PT_*, HOLOCUBE_TRANSMITTER_*, HOLOCUBE_ORIENTATION_*, HOLOCUBE_VIDEO_* markers
 ```
 
 The device tests load the trained checkpoint, confirm the startup reference check,
@@ -263,6 +270,11 @@ The model predicts one class, `0: Transmitter`, listed in
 [transmitter.names.txt](app/src/main/assets/transmitter.names.txt). The runtime
 refuses any checkpoint whose class mapping differs. The general 80-class COCO model of
 the earlier HoloCube releases is not packaged.
+
+The Orientation Detection Model predicts eight classes, `0: North` clockwise to
+`7: Northwest`, listed in [orientation.names.txt](app/src/main/assets/orientation.names.txt).
+Only the strongest valid orientation is drawn. Its training data, labels, and limits are
+recorded in [orientation_provenance.json](app/src/main/assets/orientation_provenance.json).
 
 ## Credits and licenses
 

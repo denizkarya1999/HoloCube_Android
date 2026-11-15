@@ -16,6 +16,7 @@ import kotlinx.coroutines.withContext
 import org.opencv.android.Utils
 import org.opencv.core.CvType
 import org.opencv.core.Mat
+import org.opencv.core.MatOfPoint
 import org.opencv.core.Point
 import org.opencv.core.Scalar
 import org.opencv.imgproc.Imgproc
@@ -35,27 +36,49 @@ data class DetectionResult(
     val classId: Int
 )
 
-/** The annotated output of one frame plus what was found and how long inference took. */
+/**
+ * The annotated output of one frame plus what was found and how long inference took.
+ * [orientations] and [orientationMillis] are filled when the Orientation Detection Model
+ * ran on the frame; [orientationUnavailable] says why it could not when it was asked for.
+ */
 class FrameResult(
     val frame: Bitmap,
     val detections: List<DetectionResult>,
-    val inferenceMillis: Long
+    val inferenceMillis: Long,
+    val orientations: List<OrientationResult> = emptyList(),
+    val orientationMillis: Long = 0,
+    val orientationRan: Boolean = false,
+    val orientationUnavailable: String? = null
 )
+
+/** Which models run on a frame. */
+enum class FramePipeline {
+    /** The camera screen: the transmitter, then the orientation when it is switched on. */
+    CAMERA,
+    /** Model testing: only the Transmitter Detection Model. */
+    TRANSMITTER,
+    /** Model testing: only the Orientation Detection Model. */
+    ORIENTATION
+}
 
 object Settings {
     object Inference {
         /** Preference keys of the Settings page. */
         const val KEY_CONFIDENCE = "confidence_threshold"
         const val KEY_CPU_THREADS = "cpu_threads"
+        const val KEY_ORIENTATION = "orientation_detection"
 
         /** Minimum confidence: 0.35 means 35% (Quest default). */
         @Volatile var confidenceThreshold: Float = 0.35f
         /** Background CPU threads used by PyTorch. */
         @Volatile var cpuThreads: Int = 4
+        /** Whether the camera screen also runs the Orientation Detection Model on each frame. */
+        @Volatile var orientationEnabled: Boolean = true
 
         /** Reads the Settings page values; a changed thread count reaches a running runtime. */
         fun applyPreferences(preferences: SharedPreferences) {
             confidenceThreshold = preferences.getInt(KEY_CONFIDENCE, 35).coerceIn(5, 100) / 100f
+            orientationEnabled = preferences.getString(KEY_ORIENTATION, "on") != "off"
             val threads = preferences.getString(KEY_CPU_THREADS, "4")?.toIntOrNull()?.coerceIn(1, 8) ?: 4
             if (threads != cpuThreads) {
                 cpuThreads = threads
@@ -76,7 +99,7 @@ object Settings {
 }
 
 /**
- * Frame processor for transmitter recognition, optimized to:
+ * Frame processor for transmitter recognition and orientation detection, optimized to:
  *  - Reuse CoroutineScope, Mats, and the model input buffer
  *  - Run one frame at a time (the Python worker holds one model)
  *  - Guard OpenCV init
@@ -89,13 +112,16 @@ class VideoProcessor(private val context: Context) {
     private val processingMutex = Mutex()
     @Volatile private var closed = false
     @Volatile private var loggedFirstDetection = false
+    @Volatile private var loggedFirstOrientation = false
 
     // --- Reusable OpenCV buffers ---
     // Create Mats only after the native lib is loaded
     private lateinit var frameMat: Mat
     private lateinit var inputMat: Mat
     private lateinit var overlayMat: Mat
+    private lateinit var orientationInputMat: Mat
     private var inputBytes = ByteArray(TransmitterHelper.INPUT_SIZE * TransmitterHelper.INPUT_SIZE * 4)
+    private var orientationBytes = ByteArray(0) // 640 × 640 RGBA; allocated on first use.
 
     // Guard against OpenCV init crash loops
     private val opencvLoaded = AtomicBoolean(false)
@@ -106,6 +132,7 @@ class VideoProcessor(private val context: Context) {
             opencvLoaded.set(true)
             frameMat = Mat()
             inputMat = Mat()
+            orientationInputMat = Mat()
             overlayMat = Mat()
         } catch (e: UnsatisfiedLinkError) {
             Log.e(tag, "OpenCV failed to load: ${e.message}", e)
@@ -124,6 +151,7 @@ class VideoProcessor(private val context: Context) {
             val error = try {
                 TransmitterHelper.ensureRuntime(context).awaitReady()
                 TransmitterHelper.labels(context)
+                OrientationHelper.labels(context)
                 null
             } catch (e: CancellationException) {
                 throw e
@@ -138,11 +166,16 @@ class VideoProcessor(private val context: Context) {
     }
 
     /**
-     * Detects the transmitter in [bitmap] (recycled afterwards). With [annotateFrame]
-     * false the result is a transparent overlay sized like the frame; with true the box
-     * is drawn onto a copy of the frame itself (used by the device tests and tools).
+     * Runs the models of [pipeline] on [bitmap] (recycled afterwards). With [annotateFrame]
+     * false the result is a transparent overlay sized like the frame; with true the box and
+     * triangle are drawn onto a copy of the frame itself (used by the device tests and tools).
      */
-    fun processFrame(bitmap: Bitmap, annotateFrame: Boolean = false, callback: (FrameResult?) -> Unit) {
+    fun processFrame(
+        bitmap: Bitmap,
+        annotateFrame: Boolean = false,
+        pipeline: FramePipeline = FramePipeline.CAMERA,
+        callback: (FrameResult?) -> Unit
+    ) {
         if (closed) {
             bitmap.recycle()
             return
@@ -150,7 +183,7 @@ class VideoProcessor(private val context: Context) {
         scope.launch {
             val result = try {
                 processingMutex.withLock {
-                    if (closed) null else processFrameInternalYOLO(bitmap, annotateFrame)
+                    if (closed) null else processFrameInternalYOLO(bitmap, annotateFrame, pipeline)
                 }
             } catch (e: CancellationException) {
                 throw e
@@ -168,37 +201,72 @@ class VideoProcessor(private val context: Context) {
 
     private suspend fun processFrameInternalYOLO(
         bitmap: Bitmap,
-        annotateFrame: Boolean
+        annotateFrame: Boolean,
+        pipeline: FramePipeline
     ): FrameResult? = withContext(Dispatchers.Default) {
         if (!opencvLoaded.get()) return@withContext null
         val worker = TransmitterHelper.ensureRuntime(context)
         if (!worker.isReady) return@withContext null // Still loading; try the next frame.
         if (bitmap.isRecycled) return@withContext null
 
-        // 1) Frame → RGBA Mat, then the 320 × 320 letterboxed model input
         Utils.bitmapToMat(bitmap, frameMat)
-        val letterbox = ImageLetterbox(frameMat.cols(), frameMat.rows())
-        BitmapToRgbaTensor.letterbox(frameMat, letterbox, inputMat)
-        inputBytes = BitmapToRgbaTensor.rgba(inputMat, inputBytes)
+        var detections: List<DetectionResult> = emptyList()
+        var inferenceMillis = 0L
+        if (pipeline != FramePipeline.ORIENTATION) {
+            // 1) Frame → RGBA Mat, then the 320 × 320 letterboxed model input
+            val letterbox = ImageLetterbox(frameMat.cols(), frameMat.rows())
+            BitmapToRgbaTensor.letterbox(frameMat, letterbox, inputMat)
+            inputBytes = BitmapToRgbaTensor.rgba(inputMat, inputBytes)
 
-        // 2) Original checkpoint inference on the PyTorch thread
-        val start = System.nanoTime()
-        val rows = worker.detect(inputBytes)
-        val inferenceMillis = (System.nanoTime() - start) / 1_000_000
+            // 2) Original checkpoint inference on the PyTorch thread
+            val start = System.nanoTime()
+            val rows = worker.detect(inputBytes)
+            inferenceMillis = (System.nanoTime() - start) / 1_000_000
 
-        // 3) Decode the one-to-one head; no second NMS pass. Keep only the strongest
-        //    valid Transmitter, regardless of UI settings (same rule as the headset).
-        val detections = TransmitterHelper.parseRows(
-            rows = rows,
-            letterbox = letterbox,
-            confidenceThreshold = Settings.Inference.confidenceThreshold,
-            maxDetections = TransmitterHelper.MAX_DETECTIONS,
-            expectedClasses = TransmitterHelper.labels(context).size
-        )
-        if (!loggedFirstDetection && detections.isNotEmpty()) {
-            Log.i("HoloCube", "HOLOCUBE_TRANSMITTER_SINGLE_BOX: ${detections.size} detection selected; " +
-                "highest confidence; limit ${TransmitterHelper.MAX_DETECTIONS}.")
-            loggedFirstDetection = true
+            // 3) Decode the one-to-one head; no second NMS pass. Keep only the strongest
+            //    valid Transmitter, regardless of UI settings (same rule as the headset).
+            detections = TransmitterHelper.parseRows(
+                rows = rows,
+                letterbox = letterbox,
+                confidenceThreshold = Settings.Inference.confidenceThreshold,
+                maxDetections = TransmitterHelper.MAX_DETECTIONS,
+                expectedClasses = TransmitterHelper.labels(context).size
+            )
+            if (!loggedFirstDetection && detections.isNotEmpty()) {
+                Log.i("HoloCube", "HOLOCUBE_TRANSMITTER_SINGLE_BOX: ${detections.size} detection selected; " +
+                    "highest confidence; limit ${TransmitterHelper.MAX_DETECTIONS}.")
+                loggedFirstDetection = true
+            }
+        }
+
+        // 3b) Orientation Detection Model: its own 640 × 640 letterbox of the same frame.
+        //     It does not wait for a transmitter box: the two models were trained on
+        //     different recordings and one can find the pyramid when the other does not.
+        val wantOrientation = pipeline == FramePipeline.ORIENTATION ||
+            (pipeline == FramePipeline.CAMERA && Settings.Inference.orientationEnabled)
+        var orientations: List<OrientationResult> = emptyList()
+        var orientationMillis = 0L
+        val orientationRan = wantOrientation && worker.isOrientationReady
+        val orientationUnavailable =
+            if (wantOrientation && !orientationRan) worker.orientationError ?: "not loaded" else null
+        if (orientationRan) {
+            val letterbox = ImageLetterbox(frameMat.cols(), frameMat.rows(), OrientationHelper.INPUT_SIZE)
+            BitmapToRgbaTensor.letterbox(frameMat, letterbox, orientationInputMat)
+            orientationBytes = BitmapToRgbaTensor.rgba(orientationInputMat, orientationBytes)
+            val start = System.nanoTime()
+            val rows = worker.detectOrientation(orientationBytes)
+            orientationMillis = (System.nanoTime() - start) / 1_000_000
+            orientations = OrientationHelper.parseRows(
+                rows = rows,
+                letterbox = letterbox,
+                confidenceThreshold = Settings.Inference.confidenceThreshold
+            )
+            if (!loggedFirstOrientation && orientations.isNotEmpty()) {
+                Log.i("HoloCube", "HOLOCUBE_ORIENTATION_SINGLE_TRIANGLE: " +
+                    OrientationHelper.classNameForId(orientations[0].classId) +
+                    " selected; highest confidence; limit ${OrientationHelper.MAX_DETECTIONS}.")
+                loggedFirstOrientation = true
+            }
         }
 
         // 4) Drawing: onto the frame (tests) or a transparent overlay (live view)
@@ -209,12 +277,72 @@ class VideoProcessor(private val context: Context) {
             overlayMat.setTo(Scalar(0.0, 0.0, 0.0, 0.0))
             overlayMat
         }
-        if (Settings.BoundingBox.enableBoundingBox) drawDetections(canvas, detections)
+        if (Settings.BoundingBox.enableBoundingBox) {
+            drawDetections(canvas, detections)
+            drawOrientations(canvas, orientations)
+        }
 
         // 5) Mat → Bitmap. The UI owns this bitmap; a later frame must not mutate it.
         val output = Bitmap.createBitmap(canvas.cols(), canvas.rows(), Bitmap.Config.ARGB_8888)
         Utils.matToBitmap(canvas, output)
-        FrameResult(output, detections, inferenceMillis)
+        FrameResult(output, detections, inferenceMillis, orientations, orientationMillis,
+            orientationRan, orientationUnavailable)
+    }
+
+    /** The triangle over the face, with a "North  93%" chip under its tip. */
+    private fun drawOrientations(canvas: Mat, orientations: List<OrientationResult>) {
+        val right = canvas.cols() - 1
+        val bottom = canvas.rows() - 1
+        val fontScale = (canvas.cols() / 640.0).coerceIn(0.5, 1.4)
+        val textThickness = max(1, (fontScale * 2).roundToInt())
+        val thickness = max(2, (Settings.BoundingBox.boxThickness * fontScale).roundToInt())
+        val baseline = IntArray(1)
+
+        for (orientation in orientations) {
+            val outline = MatOfPoint(
+                Point(orientation.ax.toDouble(), orientation.ay.toDouble()),
+                Point(orientation.bx.toDouble(), orientation.by.toDouble()),
+                Point(orientation.cx.toDouble(), orientation.cy.toDouble())
+            )
+            try {
+                Imgproc.polylines(canvas, listOf(outline), true, Settings.BoundingBox.boxColor, thickness, Imgproc.LINE_AA)
+            } finally {
+                outline.release()
+            }
+
+            val confPct = (orientation.confidence * 100f + 0.5f).toInt()
+            val label = OrientationHelper.classNameForId(orientation.classId) + "  " + confPct + "%"
+            val textSize = Imgproc.getTextSize(label, Imgproc.FONT_HERSHEY_SIMPLEX, fontScale, textThickness, baseline)
+            val pad = (6 * fontScale).roundToInt()
+            val chipWidth = textSize.width.toInt() + pad * 2
+            val chipHeight = textSize.height.toInt() + baseline[0] + pad * 2
+            // Under the tip so it does not cover the transmitter's chip above the box;
+            // above the triangle when there is no room below.
+            val tipY = orientation.cy.toInt().coerceIn(0, bottom)
+            val topY = minOf(orientation.ay, orientation.by).toInt().coerceIn(0, bottom)
+            val chipTop = if (tipY + pad + chipHeight <= bottom) tipY + pad else max(0, topY - chipHeight - pad)
+            val chipLeft = (orientation.cx.toInt() - chipWidth / 2).coerceIn(0, max(0, right - chipWidth))
+            Imgproc.rectangle(
+                canvas,
+                Point(chipLeft.toDouble(), chipTop.toDouble()),
+                Point((chipLeft + chipWidth).coerceAtMost(right).toDouble(), (chipTop + chipHeight).toDouble()),
+                Settings.BoundingBox.labelBackground,
+                Imgproc.FILLED,
+                Imgproc.LINE_AA,
+                0
+            )
+            Imgproc.putText(
+                canvas,
+                label,
+                Point((chipLeft + pad).toDouble(), (chipTop + chipHeight - pad - baseline[0]).toDouble()),
+                Imgproc.FONT_HERSHEY_SIMPLEX,
+                fontScale,
+                Settings.BoundingBox.labelText,
+                textThickness,
+                Imgproc.LINE_AA,
+                false
+            )
+        }
     }
 
     private fun drawDetections(canvas: Mat, detections: List<DetectionResult>) {
@@ -284,6 +412,7 @@ class VideoProcessor(private val context: Context) {
             processingMutex.withLock {
                 if (::frameMat.isInitialized) frameMat.release()
                 if (::inputMat.isInitialized) inputMat.release()
+                if (::orientationInputMat.isInitialized) orientationInputMat.release()
                 if (::overlayMat.isInitialized) overlayMat.release()
             }
             scope.cancel()

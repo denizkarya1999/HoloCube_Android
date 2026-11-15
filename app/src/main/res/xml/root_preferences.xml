@@ -11,7 +11,7 @@
             android:key="confidence_threshold"
             android:layout="@layout/preference_seekbar_layout"
             android:title="Confidence Thresholds"
-            android:summary="Minimum confidence in percent. Below it, no transmitter box is shown."
+            android:summary="Minimum confidence in percent. Below it, no transmitter box or orientation triangle is shown."
             android:defaultValue="35"
             android:max="100"
             app:min="5"
@@ -26,6 +26,15 @@
             android:entries="@array/cpu_thread_options"
             android:entryValues="@array/cpu_thread_values"
             android:defaultValue="4" />
+
+        <ListPreference
+            android:key="orientation_detection"
+            android:layout="@layout/preference_list_layout"
+            android:title="Orientation Detection"
+            android:summary="%s · also runs the Orientation Detection Model on each camera frame (640 × 640 input, slower)"
+            android:entries="@array/orientation_options"
+            android:entryValues="@array/orientation_values"
+            android:defaultValue="on" />
     </PreferenceCategory>
 
     <!-- Model testing without the camera: run a model on an image stored on this phone -->
@@ -37,7 +46,7 @@
             android:key="local_file_inference"
             android:layout="@layout/preference_list_layout"
             android:title="In-Device Local File Inference"
-            android:summary="Open a test image from this phone and run the Transmitter Detection Model on it. Other models will be listed there as they are added." />
+            android:summary="Open a test image from this phone and run the Transmitter Detection Model or the Orientation Detection Model on it." />
     </PreferenceCategory>
 
 </PreferenceScreen>
