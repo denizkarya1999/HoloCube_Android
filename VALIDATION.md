@@ -1,5 +1,28 @@
 # HoloCube Android validation
 
+## 1.4.1: visible ticks and a maize Guide OK — November 15, 2026
+
+- HoloCube Android **1.4.1 (code 9)**: the model checkboxes (Settings → Models to Run and
+  the Local File Inference screen) are drawn by the app as a Michigan Blue box with a maize
+  tick, and an empty Michigan Blue outline when unticked. The Material 3 checkbox drew its
+  tick in the box colour, so a ticked box looked like a solid square; its style also
+  overrode `android:button`, so the layouts set `app:buttonCompat` and clear the tint. The
+  Guide dialog's **OK** is maize instead of Michigan Blue on the dark dialog.
+- Workstation: `./gradlew :app:testDebugUnitTest :app:assembleDebug
+  :app:assembleDebugAndroidTest :app:lintDebug :app:assembleRelease`: BUILD SUCCESSFUL;
+  26 unit tests passed; lint 0 errors, 12 warnings; `aapt` confirms 1.4.1 / code 9. Release
+  APK 104,562,585 bytes, SHA-256 `91557efcca8604aa0cf052569eb0d85e0da1f3812377b69ff1c9a92bb3c5f98b`.
+- Pixel 8a: installed over 1.4 with `adb install -r` (installed checksum matches).
+  Screenshots show the maize ticks on both screens, the empty outline for an unticked
+  model, and the maize OK in the Guide. Local File Inference still gives Transmitter 67%
+  and North 92% with both ticked (739 ms) and Northwest 92% with orientation alone
+  (461 ms); both checkboxes were read back as ticked afterwards. Screenshots 6, 10, 11,
+  and 12 were retaken. The same APK replaced `Apps/Install HoloCube.apk` on the phone and
+  the copy in `~/Downloads` on the workstation. Not uploaded to Drive.
+- Not checked: the live camera screen.
+
+---
+
 ## 1.4: Models to Run checkboxes — November 15, 2026
 
 - HoloCube Android **1.4 (code 8)**: a checkbox for each model in **Settings → Models to

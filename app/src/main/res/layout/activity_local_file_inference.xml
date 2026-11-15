@@ -78,12 +78,16 @@
             android:textColor="@color/darkBlue" />
 
         <!-- Models to run: the same two choices as Settings → Models to Run -->
-        <CheckBox
+        <androidx.appcompat.widget.AppCompatCheckBox
             android:id="@+id/transmitterCheck"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="48dp"
-            android:buttonTint="@color/darkBlue"
+            android:button="@drawable/model_checkbox"
+            app:buttonCompat="@drawable/model_checkbox"
+            app:buttonTint="@null"
+            android:paddingStart="12dp"
+            android:paddingEnd="0dp"
             android:textColor="@color/darkBlue"
             android:textSize="16sp"
             android:textStyle="bold"
@@ -99,12 +103,16 @@
             android:textColor="@color/darkBlue"
             tools:text="YOLO26n · one class: Transmitter" />
 
-        <CheckBox
+        <androidx.appcompat.widget.AppCompatCheckBox
             android:id="@+id/orientationCheck"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="48dp"
-            android:buttonTint="@color/darkBlue"
+            android:button="@drawable/model_checkbox"
+            app:buttonCompat="@drawable/model_checkbox"
+            app:buttonTint="@null"
+            android:paddingStart="12dp"
+            android:paddingEnd="0dp"
             android:textColor="@color/darkBlue"
             android:textSize="16sp"
             android:textStyle="bold"

@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The checkbox of a Models to Run row; the row itself handles the tap -->
-<CheckBox xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- The checkbox of a Models to Run row: a Michigan Blue box with a maize tick; the row itself handles the tap -->
+<androidx.appcompat.widget.AppCompatCheckBox xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@android:id/checkbox"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:background="@null"
-    android:buttonTint="@color/darkBlue"
+    android:button="@drawable/model_checkbox"
+    app:buttonCompat="@drawable/model_checkbox"
+    app:buttonTint="@null"
     android:clickable="false"
     android:focusable="false" />

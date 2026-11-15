@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Models to Run checkbox: drawn here because the theme's own tick takes the box colour and disappears -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_checked="true" android:drawable="@drawable/model_checkbox_checked" />
+    <item android:drawable="@drawable/model_checkbox_unchecked" />
+</selector>

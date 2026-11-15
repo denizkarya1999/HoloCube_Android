@@ -260,14 +260,15 @@ around the central pyramid only.
 
 ![9](Screenshots/9.png)
 
-**10**, **11**, and **12** Version 1.4, captured on November 15, 2026. **10**: the
+**10**, **11**, and **12** Version 1.4.1, captured on November 15, 2026 (screenshot **6**,
+the Guide, was retaken with it too: its **OK** is now maize). **10**: the
 **In-Device Local File Inference** screen with both models ticked after opening
 `North_bright_640.jpg` from `Pictures/HoloCube Test Dataset`: the transmitter box
 (**Transmitter 67%**) with the orientation triangle inside it (**North 92%**), and both
-results in image pixels, 841 ms in total. **11**: the Settings page with the **Models to
-Run** checkboxes. **12**: only the Orientation Detection Model ticked, on
+results in image pixels, 739 ms in total. **11**: the Settings page with the **Models to
+Run** checkboxes, each a Michigan Blue box with a maize tick. **12**: only the Orientation Detection Model ticked, on
 `Northwest_bright_665.jpg`, a frame where the transmitter model finds nothing:
-**Northwest 92%** in 449 ms.
+**Northwest 92%** in 461 ms.
 
 | | | |
 | --- | --- | --- |

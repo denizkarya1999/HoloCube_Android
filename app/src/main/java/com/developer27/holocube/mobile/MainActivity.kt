@@ -373,11 +373,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showGuideDialog() {
-        AlertDialog.Builder(this)
+        val dialog = AlertDialog.Builder(this)
             .setTitle(R.string.guide_title)
             .setMessage(R.string.guide_text)
             .setPositiveButton(R.string.ok, null)
             .show()
+        // Maize OK: the theme's Michigan Blue is nearly invisible on the dark dialog.
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(getColor(R.color.yellow))
     }
 
     private fun openUrl(url: String) {
