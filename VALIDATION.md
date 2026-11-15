@@ -40,6 +40,10 @@
 - 25 orientation test frames (one per direction and lighting from the dataset's test
   split at index 665, plus `North_bright_640.jpg`) were added to
   `Pictures/HoloCube Test Dataset` beside the transmitter samples.
+- The 1.3.1 release APK was copied to the phone's `Apps` folder as `Install HoloCube.apk`
+  (SHA-256 verified on the phone) and the old `Install HoloCube Android 1.2.apk` was
+  deleted there at the user's request; a copy is in `~/Downloads` on the workstation. It
+  was not uploaded to Drive.
 
 ### Not verified
 
