@@ -50,7 +50,7 @@
     <!-- About page -->
     <string name="about_header">About HoloCube</string>
     <string name="about_designed_for">Designed for: HoloCube Research Project</string>
-    <string name="about_version">Version: 1.3</string>
+    <string name="about_version">Version: 1.3.1</string>
     <string name="about_platform">Platform: Android Smartphone + Meta Quest 3S</string>
     <string name="about_release_date">Release Date: TBD</string>
     <string name="about_developers">Developers: Deniz K. Acikbas and Ahmad Jayeb</string>
@@ -74,7 +74,8 @@
     <string name="local_status_box">Transmitter %1$d%% · box left %2$d, top %3$d, right %4$d, bottom %5$d px</string>
     <string name="local_status_error">Could not run the image: %1$s</string>
     <string name="local_status_orientation_found">%1$s · %2$d × %3$d · orientation %4$s · %5$d ms</string>
-    <string name="local_status_orientation_none">%1$s · %2$d × %3$d · no orientation above %4$d%% · %5$d ms</string>
+    <string name="local_status_orientation_none">%1$s · %2$d × %3$d · no orientation above %4$d%% inside the transmitter box · %5$d ms</string>
+    <string name="local_status_orientation_skipped">%1$s · %2$d × %3$d · no transmitter above %4$d%%, so orientation was not run · %5$d ms</string>
     <string name="local_status_triangle">%1$s %2$d%% · triangle (%3$d, %4$d) (%5$d, %6$d) (%7$d, %8$d) px</string>
     <string name="local_orientation_unavailable">The Orientation Detection Model is not available: %1$s</string>
     <string name="local_unsupported_image">unsupported or unreadable image</string>

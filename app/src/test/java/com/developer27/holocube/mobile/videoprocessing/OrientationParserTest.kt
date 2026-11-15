@@ -70,6 +70,25 @@ class OrientationParserTest {
         assertTrue(OrientationHelper.parseRows(rows(), letterbox, 0.05f).isEmpty())
     }
 
+    @Test fun orientationCountsOnlyInsideTheTransmitterBox() {
+        val north = OrientationHelper.parseRows(rows(north()), letterbox, 0.35f).single()
+        // The North triangle's box centre is about (1011, 639) in frame pixels.
+        val around = DetectionResult(940f, 560f, 1090f, 720f, 0.9f, 0)
+        val elsewhere = DetectionResult(100f, 100f, 300f, 300f, 0.9f, 0)
+        val justBeside = DetectionResult(1030f, 560f, 1180f, 720f, 0.9f, 0) // Centre 19 px left of it.
+        assertTrue(OrientationHelper.isInsideTransmitter(north, around))
+        assertTrue(!OrientationHelper.isInsideTransmitter(north, elsewhere))
+        assertTrue(OrientationHelper.isInsideTransmitter(north, justBeside))                 // Within the 25% margin.
+        assertTrue(!OrientationHelper.isInsideTransmitter(north, justBeside, margin = 0f))
+        // No transmitter, no orientation; otherwise the strongest candidate inside the box.
+        assertTrue(OrientationHelper.insideTransmitter(listOf(north), null).isEmpty())
+        assertTrue(OrientationHelper.insideTransmitter(listOf(north), elsewhere).isEmpty())
+        assertEquals(listOf(north), OrientationHelper.insideTransmitter(listOf(north), around))
+        val weakerInside = north.copy(confidence = 0.5f, classId = 4)
+        val strongerOutside = north.copy(left = 0f, right = 40f, top = 0f, bottom = 40f, confidence = 0.99f)
+        assertEquals(listOf(weakerInside), OrientationHelper.insideTransmitter(listOf(strongerOutside, weakerInside), around))
+    }
+
     @Test fun rejectsAnOutputOfTheWrongSize() {
         assertThrows(IllegalStateException::class.java) {
             OrientationHelper.parseRows(FloatArray(TransmitterHelper.OUTPUT_ROWS * TransmitterHelper.OUTPUT_COLUMNS), letterbox, 0.35f)

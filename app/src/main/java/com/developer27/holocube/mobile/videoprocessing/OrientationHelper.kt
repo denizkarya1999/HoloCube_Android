@@ -44,6 +44,12 @@ object OrientationHelper {
 
     /** One hologram is in view, so only the strongest valid orientation is kept. */
     const val MAX_DETECTIONS = 1
+
+    /**
+     * An orientation is shown only when its box centre lies inside the transmitter box
+     * grown by this fraction of its width and height on every side.
+     */
+    const val TRANSMITTER_BOX_MARGIN = 0.25f
     private const val LABELS_ASSET_NAME = "orientation.names.txt"
 
     @Volatile
@@ -63,6 +69,29 @@ object OrientationHelper {
     }
 
     fun classNameForId(id: Int): String = CLASS_NAMES.getOrElse(id) { "N/A" }
+
+    /** True when the centre of [orientation]'s box lies inside [transmitter] grown by [margin]. */
+    fun isInsideTransmitter(
+        orientation: OrientationResult,
+        transmitter: DetectionResult,
+        margin: Float = TRANSMITTER_BOX_MARGIN
+    ): Boolean {
+        val growX = (transmitter.right - transmitter.left) * margin
+        val growY = (transmitter.bottom - transmitter.top) * margin
+        val x = (orientation.left + orientation.right) / 2f
+        val y = (orientation.top + orientation.bottom) / 2f
+        return x >= transmitter.left - growX && x <= transmitter.right + growX &&
+            y >= transmitter.top - growY && y <= transmitter.bottom + growY
+    }
+
+    /**
+     * The transmitter comes first: the strongest of [candidates] (already sorted by
+     * confidence) that lies inside [transmitter], or nothing when there is no transmitter.
+     */
+    fun insideTransmitter(candidates: List<OrientationResult>, transmitter: DetectionResult?): List<OrientationResult> {
+        if (transmitter == null) return emptyList()
+        return candidates.filter { isInsideTransmitter(it, transmitter) }.take(MAX_DETECTIONS)
+    }
 
     /**
      * Reads the runtime's rows. Each row is [left, top, right, bottom, confidence,

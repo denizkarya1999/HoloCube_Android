@@ -1,5 +1,58 @@
 # HoloCube Android validation
 
+## 1.3.1: transmitter first, orientation inside its box — November 15, 2026
+
+- HoloCube Android **1.3.1 (code 6)**: the Orientation Detection Model now runs only when
+  the transmitter model detected a transmitter, and its result is shown only when its box
+  centre lies inside the transmitter's box (grown by 25%). The Local File Inference
+  "Orientation" choice runs the same two steps. Installed over 1.3 (and 1.3 over 1.2) on
+  the connected **Pixel 8a** with `adb install -r`; app data kept.
+- Why the model still sees the whole frame: on 27 test-split frames (desktop, Ultralytics
+  8.4.56, deployed transmitter weights and supplied orientation weights) the transmitter
+  was found in 21. Orientation was right at ≥ 35% in 25 of 27 on whole frames, 20 of 21
+  with the gate-and-filter rule, 9 of 21 when everything outside the transmitter box was
+  painted gray, and 0 of 21 when the box was cropped and enlarged to the model input
+  (at most 6 of 21 with a margin of up to five box sizes).
+
+### Passed on the development computer
+
+- `./gradlew :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest
+  :app:lintDebug :app:assembleRelease` with JDK 21: BUILD SUCCESSFUL; 22 unit tests passed;
+  lint 0 errors, 11 warnings; `aapt` confirms 1.3.1 / code 6. Release APK 104,557,472
+  bytes, SHA-256 `31fe7ecbac8488d8d85bb783805ad6f3a4b9cd308e81cc876d12eeb0bb66b8d3`.
+
+### Passed on the connected Pixel 8a
+
+- Startup (1.3): `HOLOCUBE_PT_DEVICE_PARITY_PASSED`, `HOLOCUBE_PT_READY`, then about 6 s
+  later `HOLOCUBE_ORIENTATION_DEVICE_PARITY_PASSED` and `HOLOCUBE_ORIENTATION_READY`: the
+  orientation checkpoint loads on ARM and reproduces its reference class, confidence, box,
+  and triangle.
+- Local File Inference, `North_bright_640.jpg` (1920 × 1080): Transmitter model
+  `1 transmitter · 83 ms`, `Transmitter 67% · box left 966, top 535, right 1288, bottom
+  763 px`. Orientation choice (1.3.1): `orientation North · 652 ms`, `North 92% · triangle
+  (955, 571) (1072, 571) (1017, 697) px`, the same corners as the desktop reference; the
+  log shows the transmitter pass in 83 ms and the orientation pass in 566 ms
+  (`HOLOCUBE_ORIENTATION_SINGLE_TRIANGLE: North selected inside the transmitter box`). A
+  screenshot shows the transmitter box with the triangle and its `North  92%` chip inside.
+- `Northwest_bright_665.jpg`, where the transmitter model finds nothing: `no transmitter
+  above 34%, so orientation was not run · 150 ms` (34% is the threshold stored on this
+  phone).
+- 25 orientation test frames (one per direction and lighting from the dataset's test
+  split at index 665, plus `North_bright_640.jpg`) were added to
+  `Pictures/HoloCube Test Dataset` beside the transmitter samples.
+
+### Not verified
+
+- The live camera screen with the orientation model was not exercised: the phone was not
+  pointed at the transmitter. Only the Local File Inference path was checked on the phone.
+- No device test covers the orientation model, and the existing device tests were not
+  rerun.
+- The gate makes orientation depend on the transmitter model, which was trained on
+  headset recordings and misses the pyramid in some phone frames (6 of the 27 test
+  frames, mostly bright ones); no orientation is shown for those.
+
+---
+
 ## 1.3: Orientation Detection Model — November 15, 2026
 
 - HoloCube Android **1.3 (code 5)** adds the eight-class **Orientation Detection Model**

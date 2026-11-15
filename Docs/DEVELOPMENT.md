@@ -96,12 +96,18 @@ serialization. The weights are otherwise unchanged; both hashes are in
   `PyTorchWorker.detectOrientation`. The result is `[5,12]`: the five strongest rows of
   `[x1,y1,x2,y2,confidence,class_id,ax,ay,bx,by,cx,cy]`. `OrientationHelper.parseRows`
   maps box and corners back to frame pixels and keeps the strongest valid row.
-- The orientation pass does not wait for a transmitter box. The two models were trained
-  on different recordings (headset and phone), and one can find the pyramid when the
-  other does not.
+- **Transmitter first.** The orientation pass runs only when the transmitter model
+  detected a transmitter in the frame, and `OrientationHelper.insideTransmitter` keeps the
+  strongest orientation whose box centre lies inside the transmitter's box grown by 25%
+  (`TRANSMITTER_BOX_MARGIN`). The model still receives the whole frame: it was trained on
+  whole frames, and on 27 test frames it named the direction correctly in 0 of 21 when
+  given only the cropped box, 9 of 21 with everything outside the box painted gray, and
+  20 of 21 with this gate-and-filter rule (25 of 27 with no gate). Cropping needs a model
+  retrained on crops.
 - `FramePipeline` selects what runs: `CAMERA` (transmitter, then orientation when
-  **Settings → Orientation Detection** is on), `TRANSMITTER`, or `ORIENTATION` (the two
-  Local File Inference choices).
+  **Settings → Orientation Detection** is on), `TRANSMITTER` (transmitter only), or
+  `ORIENTATION` (transmitter, then orientation; the Local File Inference choice reports
+  when no transmitter was found and orientation was therefore not run).
 
 On some frames the end-to-end head returns two or three near-identical rows that share
 the confidence, so a visible pyramid can score below the threshold; only the strongest row

@@ -200,15 +200,20 @@ class LocalFileInferenceActivity : AppCompatActivity() {
         previous?.recycle()
 
         val threshold = (Settings.Inference.confidenceThreshold * 100f + 0.5f).toInt()
-        if (result.orientationRan) {
-            // Orientation Detection Model: the direction, then the triangle's corners.
+        if (model == LocalInferenceModel.ORIENTATION) {
+            // Orientation Detection Model: it runs only after a transmitter was found, and
+            // only a result inside the transmitter's box counts.
             val orientation = result.orientations.firstOrNull()
-            if (orientation == null) {
-                showStatus(getString(R.string.local_status_orientation_none, name, width, height, threshold, result.orientationMillis))
+            val millis = result.inferenceMillis + result.orientationMillis
+            if (!result.orientationRan) {
+                showStatus(getString(R.string.local_status_orientation_skipped, name, width, height, threshold, millis))
+                binding.detailText.visibility = View.GONE
+            } else if (orientation == null) {
+                showStatus(getString(R.string.local_status_orientation_none, name, width, height, threshold, millis))
                 binding.detailText.visibility = View.GONE
             } else {
                 val direction = OrientationHelper.classNameForId(orientation.classId)
-                showStatus(getString(R.string.local_status_orientation_found, name, width, height, direction, result.orientationMillis))
+                showStatus(getString(R.string.local_status_orientation_found, name, width, height, direction, millis))
                 binding.detailText.visibility = View.VISIBLE
                 binding.detailText.text = getString(
                     R.string.local_status_triangle,

@@ -61,10 +61,12 @@ the headset app.
 Version 1.3 adds a second model, the **Orientation Detection Model** (YOLO26n-seg, eight
 classes: North, Northeast, East, Southeast, South, Southwest, West, Northwest). It names
 the compass direction the pyramid is seen from and outlines the pyramid face showing that
-direction's cube with a **triangle**. On the camera screen it runs on every frame after
-the transmitter model and adds the triangle, a chip such as `North  93%` under its tip,
-and the direction to the status line; **Settings → Orientation Detection** switches it
-off. It uses a 640 × 640 input, so frames take several times longer with it on. If its
+direction's cube with a **triangle**. The transmitter comes first: the orientation model
+runs only on frames where the transmitter model detected a transmitter, and its result is
+shown only when it lies inside the transmitter's box (since 1.3.1). The camera screen then
+adds the triangle, a chip such as `North  93%` under its tip, and the direction to the
+status line; **Settings → Orientation Detection** switches it off. It uses a 640 × 640
+input, so frames with a transmitter take several times longer with it on. If its
 checkpoint cannot be loaded, the transmitter keeps working and the log says why. Each
 model has its own helper (`TransmitterHelper`, `OrientationHelper`) with its checkpoint,
 class list, and reference fixture; another model is added the same way.

@@ -31,7 +31,7 @@
             android:key="orientation_detection"
             android:layout="@layout/preference_list_layout"
             android:title="Orientation Detection"
-            android:summary="%s · also runs the Orientation Detection Model on each camera frame (640 × 640 input, slower)"
+            android:summary="%s · runs the Orientation Detection Model whenever a transmitter is detected (640 × 640 input, slower)"
             android:entries="@array/orientation_options"
             android:entryValues="@array/orientation_values"
             android:defaultValue="on" />

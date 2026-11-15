@@ -18,7 +18,8 @@ enum class LocalInferenceModel(val id: String, val displayName: String, val desc
         id = "orientation",
         displayName = "Orientation Detection Model",
         description = "YOLO26n-seg · eight classes: North to Northwest (a triangle over the face " +
-            "showing that direction's cube) · " + OrientationHelper.CHECKPOINT_FILE
+            "showing that direction's cube) · runs after a transmitter is found, inside its box · " +
+            OrientationHelper.CHECKPOINT_FILE
     );
 
     companion object {

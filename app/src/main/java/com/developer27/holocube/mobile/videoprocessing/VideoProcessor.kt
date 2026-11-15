@@ -39,7 +39,8 @@ data class DetectionResult(
 /**
  * The annotated output of one frame plus what was found and how long inference took.
  * [orientations] and [orientationMillis] are filled when the Orientation Detection Model
- * ran on the frame; [orientationUnavailable] says why it could not when it was asked for.
+ * ran on the frame, which it does only after a transmitter was detected ([orientationRan]);
+ * [orientationUnavailable] says why it could not when it was asked for.
  */
 class FrameResult(
     val frame: Bitmap,
@@ -53,11 +54,11 @@ class FrameResult(
 
 /** Which models run on a frame. */
 enum class FramePipeline {
-    /** The camera screen: the transmitter, then the orientation when it is switched on. */
+    /** The camera screen: the transmitter, then, inside its box, the orientation when switched on. */
     CAMERA,
     /** Model testing: only the Transmitter Detection Model. */
     TRANSMITTER,
-    /** Model testing: only the Orientation Detection Model. */
+    /** Model testing: the transmitter, then the Orientation Detection Model inside its box. */
     ORIENTATION
 }
 
@@ -212,7 +213,7 @@ class VideoProcessor(private val context: Context) {
         Utils.bitmapToMat(bitmap, frameMat)
         var detections: List<DetectionResult> = emptyList()
         var inferenceMillis = 0L
-        if (pipeline != FramePipeline.ORIENTATION) {
+        run {
             // 1) Frame → RGBA Mat, then the 320 × 320 letterboxed model input
             val letterbox = ImageLetterbox(frameMat.cols(), frameMat.rows())
             BitmapToRgbaTensor.letterbox(frameMat, letterbox, inputMat)
@@ -239,16 +240,18 @@ class VideoProcessor(private val context: Context) {
             }
         }
 
-        // 3b) Orientation Detection Model: its own 640 × 640 letterbox of the same frame.
-        //     It does not wait for a transmitter box: the two models were trained on
-        //     different recordings and one can find the pyramid when the other does not.
+        // 3b) Orientation Detection Model: only after a transmitter was detected. It sees
+        //     its own 640 × 640 letterbox of the whole frame (it was trained on whole
+        //     frames and fails on a crop), and its result is kept only inside the
+        //     transmitter's box.
         val wantOrientation = pipeline == FramePipeline.ORIENTATION ||
             (pipeline == FramePipeline.CAMERA && Settings.Inference.orientationEnabled)
+        val transmitter = detections.firstOrNull()
         var orientations: List<OrientationResult> = emptyList()
         var orientationMillis = 0L
-        val orientationRan = wantOrientation && worker.isOrientationReady
+        val orientationRan = wantOrientation && worker.isOrientationReady && transmitter != null
         val orientationUnavailable =
-            if (wantOrientation && !orientationRan) worker.orientationError ?: "not loaded" else null
+            if (wantOrientation && !worker.isOrientationReady) worker.orientationError ?: "not loaded" else null
         if (orientationRan) {
             val letterbox = ImageLetterbox(frameMat.cols(), frameMat.rows(), OrientationHelper.INPUT_SIZE)
             BitmapToRgbaTensor.letterbox(frameMat, letterbox, orientationInputMat)
@@ -256,15 +259,19 @@ class VideoProcessor(private val context: Context) {
             val start = System.nanoTime()
             val rows = worker.detectOrientation(orientationBytes)
             orientationMillis = (System.nanoTime() - start) / 1_000_000
-            orientations = OrientationHelper.parseRows(
-                rows = rows,
-                letterbox = letterbox,
-                confidenceThreshold = Settings.Inference.confidenceThreshold
+            orientations = OrientationHelper.insideTransmitter(
+                OrientationHelper.parseRows(
+                    rows = rows,
+                    letterbox = letterbox,
+                    confidenceThreshold = Settings.Inference.confidenceThreshold,
+                    maxDetections = OrientationHelper.OUTPUT_ROWS
+                ),
+                transmitter
             )
             if (!loggedFirstOrientation && orientations.isNotEmpty()) {
                 Log.i("HoloCube", "HOLOCUBE_ORIENTATION_SINGLE_TRIANGLE: " +
                     OrientationHelper.classNameForId(orientations[0].classId) +
-                    " selected; highest confidence; limit ${OrientationHelper.MAX_DETECTIONS}.")
+                    " selected inside the transmitter box; highest confidence; limit ${OrientationHelper.MAX_DETECTIONS}.")
                 loggedFirstOrientation = true
             }
         }
