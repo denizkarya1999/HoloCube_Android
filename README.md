@@ -260,15 +260,18 @@ around the central pyramid only.
 
 ![9](Screenshots/9.png)
 
-**10** and **11** Version 1.4, captured on November 15, 2026. **10**: the **In-Device
-Local File Inference** screen with both models ticked after opening `North_bright_640.jpg`
-from `Pictures/HoloCube Test Dataset`: the transmitter box (**Transmitter 67%**) with the
-orientation triangle inside it (**North 92%**), and both results in image pixels, 841 ms
-in total. **11**: the Settings page with the **Models to Run** checkboxes.
+**10**, **11**, and **12** Version 1.4, captured on November 15, 2026. **10**: the
+**In-Device Local File Inference** screen with both models ticked after opening
+`North_bright_640.jpg` from `Pictures/HoloCube Test Dataset`: the transmitter box
+(**Transmitter 67%**) with the orientation triangle inside it (**North 92%**), and both
+results in image pixels, 841 ms in total. **11**: the Settings page with the **Models to
+Run** checkboxes. **12**: only the Orientation Detection Model ticked, on
+`Northwest_bright_665.jpg`, a frame where the transmitter model finds nothing:
+**Northwest 92%** in 449 ms.
 
-| | |
-| --- | --- |
-| **10** Local file inference, both models ![10](Screenshots/10.png) | **11** Settings: Models to Run ![11](Screenshots/11.png) |
+| | | |
+| --- | --- | --- |
+| **10** Both models ![10](Screenshots/10.png) | **11** Settings: Models to Run ![11](Screenshots/11.png) | **12** Orientation only ![12](Screenshots/12.png) |
 
 The live-inference screenshot shows the status line (**0 transmitters · 149 ms**)
 while the camera looked at the ceiling; no box is drawn without a transmitter in view.

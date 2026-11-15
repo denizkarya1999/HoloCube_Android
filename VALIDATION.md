@@ -35,15 +35,15 @@
     (screenshot 11).
 - The release APK replaced `Apps/Install HoloCube.apk` on the phone and the copy in
   `~/Downloads` on the workstation (checksums verified). Not uploaded to Drive.
-- Screenshots 10 and 11 in `Screenshots/` replace the 1.2 ones.
+- Screenshots 10 and 11 in `Screenshots/` replace the 1.2 ones; 12 is new.
+- On the final build, orientation alone on `Northwest_bright_665.jpg` again gave
+  `orientation Northwest · 449 ms`, `Northwest 92% · triangle (703, 403) (808, 403)
+  (756, 520) px` (screenshot 12), and both checkboxes were read back as ticked afterwards.
 
 ### Not verified
 
 - The live camera screen with the checkboxes (only Local File Inference and the Settings
   page were exercised), and the "no model ticked" status line on the camera screen.
-- An orientation-only screenshot was not captured: the phone locked during the retake.
-  Because of that, the Transmitter checkbox may have been left unticked on the phone; it
-  could not be read back while the phone was locked.
 - No device test covers the new selection; the existing device tests were not rerun.
 
 ---
