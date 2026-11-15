@@ -1,5 +1,22 @@
 # HoloCube Android validation
 
+## 1.3.2: maize model list — November 15, 2026
+
+- HoloCube Android **1.3.2 (code 7)**: the open model list on the Local File Inference
+  screen is a maize panel with a Michigan Blue edge and Michigan Blue text
+  (`model_dropdown_background.xml`, `spinner_dropdown_item_model.xml`), and the spinner
+  arrow is Michigan Blue. No other change.
+- Workstation: `./gradlew :app:testDebugUnitTest :app:assembleDebug :app:lintDebug
+  :app:assembleRelease`: BUILD SUCCESSFUL; lint 0 errors, 11 warnings; `aapt` confirms
+  1.3.2 / code 7. Release APK 104,558,600 bytes, SHA-256
+  `0a4652630b4ec551dfae01b922ac88a8b786a5c9d4ab5be20ec7bbbbdb412ec8`.
+- Pixel 8a: installed over 1.3.1 with `adb install -r`; a screenshot of the open list
+  shows both model names in Michigan Blue on the maize panel. The same APK replaced
+  `Apps/Install HoloCube.apk` on the phone (checksum verified) and the copy in
+  `~/Downloads` on the workstation. It was not uploaded to Drive.
+
+---
+
 ## 1.3.1: transmitter first, orientation inside its box — November 15, 2026
 
 - HoloCube Android **1.3.1 (code 6)**: the Orientation Detection Model now runs only when

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The open model list on the Local File Inference screen: a maize panel with a Michigan Blue edge -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/yellow" />
+    <stroke android:width="2dp" android:color="@color/darkBlue" />
+    <corners android:radius="6dp" />
+</shape>

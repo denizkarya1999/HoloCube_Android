@@ -80,7 +80,7 @@ class LocalFileInferenceActivity : AppCompatActivity() {
         val models = LocalInferenceModel.entries
         binding.modelSpinner.adapter =
             ArrayAdapter(this, R.layout.spinner_item_model, models.map { it.displayName }).apply {
-                setDropDownViewResource(R.layout.spinner_item_model)
+                setDropDownViewResource(R.layout.spinner_dropdown_item_model)
             }
         binding.modelSpinner.setSelection(models.indexOf(model))
         binding.modelSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
